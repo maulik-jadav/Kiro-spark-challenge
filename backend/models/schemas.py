@@ -17,6 +17,10 @@ class RouteRequest(BaseModel):
         default=None,
         description="Transit modes to evaluate. None = all available.",
     )
+    constraint: str | None = Field(
+        default=None,
+        description="User constraint for the decision agent (e.g., 'Arrive by 10 AM', 'Budget under $5').",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -46,6 +50,17 @@ class RouteOption(BaseModel):
     cost_source: str
 
 
+class AgentReasoning(BaseModel):
+    """Natural language reasoning from the decision agent."""
+    recommended_mode: TransitMode
+    summary: str = Field(..., description="1-2 sentence recommendation")
+    justification: str = Field(..., description="Detailed reasoning comparing trade-offs")
+    constraint_analysis: str | None = Field(
+        default=None,
+        description="How the recommendation satisfies the user's constraint",
+    )
+
+
 class RouteComparison(BaseModel):
     """Full comparison across all evaluated modes."""
     origin: str
@@ -55,6 +70,7 @@ class RouteComparison(BaseModel):
     fastest: RouteOption | None = None
     cheapest: RouteOption | None = None
     savings_vs_driving_kg: float | None = None
+    reasoning: AgentReasoning | None = None
 
 
 class HealthResponse(BaseModel):

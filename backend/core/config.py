@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Google Maps
     google_maps_api_key: str = ""
 
+    # Groq — used by the decision agent (runs Llama on fast inference)
+    groq_api_key: str = ""
+
     # Routing mode: "live" uses Google Maps API, "mock" uses synthetic data
     routing_mode: str = "mock"
 

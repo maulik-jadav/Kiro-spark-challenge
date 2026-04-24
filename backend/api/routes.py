@@ -1,17 +1,10 @@
 """
-API routes for Phase 1.1: single-route comparison.
+API routes — powered by the multi-agent orchestrator.
 """
 
 from fastapi import APIRouter, Depends
 
-from agents.routing_agent import get_routes
-from agents.emissions_agent import (
-    analyze_all,
-    find_greenest,
-    find_fastest,
-    find_cheapest,
-    savings_vs_driving,
-)
+from agents.orchestrator import plan_route as orchestrate
 from core.config import Settings, get_settings
 from models.schemas import RouteRequest, RouteComparison, HealthResponse
 
@@ -30,34 +23,17 @@ async def plan_route(
     settings: Settings = Depends(get_settings),
 ):
     """
-    Phase 1.1 core endpoint.
-
-    Given an origin and destination, returns a comparison of all transit modes
-    ranked by carbon cost, with segment-level emissions breakdowns.
+    Core endpoint — runs the full agent pipeline:
+      1. Routing Agent fetches all route options
+      2. Emissions Agent computes carbon + cost per option
+      3. Decision Agent reasons about trade-offs and recommends
     """
-    raw_routes = await get_routes(
+    return await orchestrate(
         origin=req.origin,
         destination=req.destination,
         modes=req.modes,
+        constraint=req.constraint,
         routing_mode=settings.routing_mode,
-        api_key=settings.google_maps_api_key,
-    )
-
-    options = analyze_all(raw_routes)
-    greenest = find_greenest(options)
-    fastest = find_fastest(options)
-    cheapest = find_cheapest(options)
-    savings = savings_vs_driving(options)
-
-    # Sort by emissions (lowest first)
-    options.sort(key=lambda o: o.total_emissions_g)
-
-    return RouteComparison(
-        origin=req.origin,
-        destination=req.destination,
-        options=options,
-        greenest=greenest,
-        fastest=fastest,
-        cheapest=cheapest,
-        savings_vs_driving_kg=savings,
+        google_maps_api_key=settings.google_maps_api_key,
+        groq_api_key=settings.groq_api_key,
     )
