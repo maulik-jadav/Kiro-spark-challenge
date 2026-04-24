@@ -9,3 +9,4 @@ node_modules/
 .next/
 .env
 __pycache__/
+.kiro/settings
