@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     # Google Maps
     google_maps_api_key: str = ""
 
+    # Google OAuth (Calendar integration)
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:8000/api/v1/auth/callback"
+
     # Groq — used by the decision agent (runs Llama on fast inference)
     groq_api_key: str = ""
 

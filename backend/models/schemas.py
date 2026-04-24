@@ -73,6 +73,75 @@ class RouteComparison(BaseModel):
     reasoning: AgentReasoning | None = None
 
 
+# ---------------------------------------------------------------------------
+# Calendar / Itinerary models (Phase 1.3)
+# ---------------------------------------------------------------------------
+
+class CalendarEvent(BaseModel):
+    """A single calendar event."""
+    summary: str
+    location: str
+    start: str = Field(..., description="ISO 8601 datetime")
+    end: str = Field(..., description="ISO 8601 datetime")
+
+
+class TransitRecommendation(BaseModel):
+    """Summary of the recommended transit for a window."""
+    mode: TransitMode
+    duration_min: float
+    emissions_g: float
+    cost_usd: float
+    summary: str
+
+
+class TransitWindow(BaseModel):
+    """A gap between two events with a transit recommendation."""
+    from_event: str
+    to_event: str
+    origin: str
+    destination: str
+    depart_after: str = Field(..., description="Earliest departure (ISO 8601)")
+    arrive_by: str = Field(..., description="Latest arrival (ISO 8601)")
+    available_min: float = Field(..., description="Total minutes available for transit")
+    recommended: TransitRecommendation
+    route: RouteComparison
+
+
+class DayPlanRequest(BaseModel):
+    """Request to plan a full day's transit."""
+    date: str = Field(..., description="Date to plan (YYYY-MM-DD)")
+    session_id: str | None = Field(
+        default=None,
+        description="OAuth session ID. If omitted, uses mock calendar data.",
+    )
+    home_address: str = Field(
+        default="",
+        description="Home address for commute to first and from last event.",
+    )
+
+
+class DayPlanResponse(BaseModel):
+    """Full day itinerary with transit between each event."""
+    date: str
+    events: list[CalendarEvent]
+    transit_windows: list[TransitWindow]
+    total_emissions_g: float
+    total_cost_usd: float
+    total_transit_min: float
+
+
+class AuthUrlResponse(BaseModel):
+    """OAuth authorization URL response."""
+    auth_url: str
+    state: str
+
+
+class AuthCallbackResponse(BaseModel):
+    """OAuth callback response with session ID."""
+    session_id: str
+    message: str = "Authentication successful"
+
+
 class HealthResponse(BaseModel):
     status: str = "ok"
     routing_mode: str

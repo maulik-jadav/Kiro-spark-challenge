@@ -114,8 +114,36 @@ async def decide(
         return _fallback_reasoning(options)
 
 
+def _score_option(opt: RouteOption, options: list[RouteOption]) -> float:
+    """
+    Score a route option from 0-100 using weighted criteria.
+    Lower is better for all raw metrics, so we normalize and invert.
+
+    Weights: 40% emissions, 35% time, 25% cost
+    """
+    all_emissions = [o.total_emissions_g for o in options]
+    all_times = [o.total_duration_min for o in options]
+    all_costs = [o.total_cost_usd for o in options]
+
+    def _normalize(val: float, vals: list[float]) -> float:
+        lo, hi = min(vals), max(vals)
+        if hi == lo:
+            return 1.0
+        return 1.0 - (val - lo) / (hi - lo)  # 1.0 = best, 0.0 = worst
+
+    emission_score = _normalize(opt.total_emissions_g, all_emissions)
+    time_score = _normalize(opt.total_duration_min, all_times)
+    cost_score = _normalize(opt.total_cost_usd, all_costs)
+
+    return 0.40 * emission_score + 0.35 * time_score + 0.25 * cost_score
+
+
 def _fallback_reasoning(options: list[RouteOption]) -> AgentReasoning:
-    """Deterministic fallback when the LLM is unavailable."""
+    """
+    Deterministic fallback when the LLM is unavailable.
+    Uses weighted scoring (40% emissions, 35% time, 25% cost)
+    instead of always picking the greenest.
+    """
     if not options:
         return AgentReasoning(
             recommended_mode=TransitMode.WALKING,
@@ -123,29 +151,43 @@ def _fallback_reasoning(options: list[RouteOption]) -> AgentReasoning:
             justification="No options were returned by the routing engine.",
         )
 
+    # Score and rank all options
+    scored = [(opt, _score_option(opt, options)) for opt in options]
+    scored.sort(key=lambda x: x[1], reverse=True)  # highest score first
+    best, best_score = scored[0]
+
     greenest = min(options, key=lambda o: o.total_emissions_g)
     fastest = min(options, key=lambda o: o.total_duration_min)
+    cheapest = min(options, key=lambda o: o.total_cost_usd)
 
-    if greenest.mode == fastest.mode:
-        summary = (
-            f"{greenest.mode.value} is both the greenest and fastest option "
-            f"at {greenest.total_emissions_g:.0f}g CO2 in {greenest.total_duration_min:.0f} min."
+    parts = [
+        f"Recommended {best.mode.value} based on a weighted score "
+        f"(40% emissions, 35% time, 25% cost).",
+    ]
+
+    if best.mode != greenest.mode:
+        parts.append(
+            f"The greenest option is {greenest.mode.value} "
+            f"({greenest.total_emissions_g:.0f}g CO2) but takes "
+            f"{greenest.total_duration_min:.0f} min."
         )
-    else:
-        time_diff = greenest.total_duration_min - fastest.total_duration_min
-        carbon_diff = fastest.total_emissions_g - greenest.total_emissions_g
-        summary = (
-            f"Take {greenest.mode.value} to save {carbon_diff:.0f}g CO2 "
-            f"for only {time_diff:.0f} extra minutes vs {fastest.mode.value}."
+    if best.mode != fastest.mode:
+        parts.append(
+            f"The fastest option is {fastest.mode.value} "
+            f"({fastest.total_duration_min:.0f} min) but emits "
+            f"{fastest.total_emissions_g:.0f}g CO2."
         )
+
+    parts.append(
+        f"{best.mode.value}: {best.total_duration_min:.0f} min, "
+        f"{best.total_emissions_g:.0f}g CO2, ${best.total_cost_usd:.2f}."
+    )
 
     return AgentReasoning(
-        recommended_mode=greenest.mode,
-        summary=summary,
-        justification=(
-            f"The greenest option is {greenest.mode.value} at "
-            f"{greenest.total_emissions_g:.0f}g CO2 and ${greenest.total_cost_usd:.2f}. "
-            f"The fastest is {fastest.mode.value} at {fastest.total_duration_min:.0f} min. "
-            f"Defaulting to the lowest-emission choice (fallback mode — no LLM available)."
+        recommended_mode=best.mode,
+        summary=(
+            f"Take {best.mode.value} — {best.total_duration_min:.0f} min, "
+            f"{best.total_emissions_g:.0f}g CO2, ${best.total_cost_usd:.2f}."
         ),
+        justification=" ".join(parts),
     )
