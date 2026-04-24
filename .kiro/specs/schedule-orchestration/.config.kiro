@@ -1,5 +1,5 @@
 {
   "specType": "feature",
   "workflowType": "requirements-first",
-  "featureName": "backend"
+  "featureName": "schedule-orchestration"
 }
