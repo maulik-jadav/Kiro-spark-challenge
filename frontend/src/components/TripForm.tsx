@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { ALL_MODES, MODE_LABELS, TransitMode } from "@/types/api";
 
 interface TripFormProps {
@@ -31,21 +32,31 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
   }
 
   const inputClass =
-    "w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded font-body text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary transition-all";
+    "w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded font-body text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary transition-all duration-200";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="mb-4">
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="mb-4"
+      >
         <h2 className="font-headline font-semibold text-lg text-on-surface">Plan Your Journey</h2>
         <p className="text-xs text-on-surface-variant mt-0.5">Enter details to find optimal paths.</p>
-      </div>
+      </motion.div>
 
-      {/* Location inputs with connecting line */}
+      {/* Location inputs */}
       <div className="relative space-y-3">
         <div className="absolute left-5 top-8 bottom-8 w-px bg-outline-variant z-0 hidden sm:block" />
 
         {/* Origin */}
-        <div className="relative z-10 flex items-center gap-3">
+        <motion.div
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.35, delay: 0.05 }}
+          className="relative z-10 flex items-center gap-3"
+        >
           <div className="hidden sm:flex w-10 h-10 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant shrink-0">
             <span className="material-symbols-outlined text-outline text-[18px]">trip_origin</span>
           </div>
@@ -60,11 +71,24 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
               className={inputClass}
             />
           </div>
-        </div>
-        {errors.origin && <p className="text-error text-xs ml-13">{errors.origin}</p>}
+        </motion.div>
+        {errors.origin && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-error text-xs ml-13"
+          >
+            {errors.origin}
+          </motion.p>
+        )}
 
         {/* Destination */}
-        <div className="relative z-10 flex items-center gap-3">
+        <motion.div
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
+          className="relative z-10 flex items-center gap-3"
+        >
           <div className="hidden sm:flex w-10 h-10 rounded-full bg-tertiary items-center justify-center border border-tertiary shrink-0">
             <span className="material-symbols-outlined text-on-tertiary text-[18px]">location_on</span>
           </div>
@@ -79,46 +103,74 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
               className={inputClass}
             />
           </div>
-        </div>
-        {errors.destination && <p className="text-error text-xs">{errors.destination}</p>}
+        </motion.div>
+        {errors.destination && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-error text-xs"
+          >
+            {errors.destination}
+          </motion.p>
+        )}
       </div>
 
       <div className="h-px w-full bg-outline-variant" />
 
       {/* Mode chips */}
-      <div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.35, delay: 0.15 }}
+      >
         <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mb-2">
           Transit modes <span className="font-normal normal-case tracking-normal">(blank = all)</span>
         </p>
         <div className="flex flex-wrap gap-1.5">
-          {ALL_MODES.map((mode) => {
+          {ALL_MODES.map((mode, i) => {
             const active = selectedModes.includes(mode);
             return (
-              <button
+              <motion.button
                 key={mode}
                 type="button"
                 onClick={() => toggleMode(mode)}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.18 + i * 0.04, duration: 0.25 }}
+                whileTap={{ scale: 0.92 }}
+                whileHover={{ scale: 1.05 }}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-200 ${
                   active
                     ? "bg-tertiary text-on-tertiary border-tertiary"
                     : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-tertiary"
                 }`}
               >
                 {MODE_LABELS[mode]}
-              </button>
+              </motion.button>
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
-      <button
+      <motion.button
         type="submit"
         disabled={loading}
-        className="w-full bg-tertiary hover:bg-tertiary-container text-on-tertiary font-semibold text-xs uppercase tracking-widest py-3 rounded transition-colors flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.25 }}
+        whileHover={{ scale: loading ? 1 : 1.02 }}
+        whileTap={{ scale: loading ? 1 : 0.97 }}
+        className="w-full bg-tertiary hover:bg-tertiary-container text-on-tertiary font-semibold text-xs uppercase tracking-widest py-3 rounded transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
       >
-        <span className="material-symbols-outlined text-[18px]">route</span>
+        <motion.span
+          animate={loading ? { rotate: 360 } : { rotate: 0 }}
+          transition={loading ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
+          className="material-symbols-outlined text-[18px]"
+        >
+          route
+        </motion.span>
         {loading ? "Planning route…" : "Calculate Routes"}
-      </button>
+      </motion.button>
     </form>
   );
 }
