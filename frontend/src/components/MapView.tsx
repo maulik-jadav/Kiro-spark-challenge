@@ -23,6 +23,7 @@ const MAP_STYLES: google.maps.MapTypeStyle[] = [
   { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#dfd2ae" }] },
   { featureType: "landscape.natural", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
   { featureType: "poi", elementType: "geometry", stylers: [{ color: "#dfd2ae" }] },
+  { featureType: "poi", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
   { featureType: "poi", elementType: "labels.text", stylers: [{ visibility: "off" }] },
   { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#93817c" }] },
   { featureType: "poi.business", stylers: [{ visibility: "off" }] },
