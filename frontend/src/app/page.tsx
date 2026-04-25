@@ -3,6 +3,7 @@
 import { useState } from "react";
 import TripForm from "@/components/TripForm";
 import ResultsPanel from "@/components/ResultsPanel";
+import ReasoningPanel from "@/components/ReasoningPanel";
 import MapView from "@/components/MapView";
 import { planRoute } from "@/lib/api";
 import type { RouteComparison, TransitMode } from "@/types/api";
@@ -17,13 +18,14 @@ export default function Home() {
   async function handleSubmit(
     origin: string,
     destination: string,
-    modes: TransitMode[] | null
+    modes: TransitMode[] | null,
+    constraint: string | null
   ) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const data = await planRoute(origin, destination, modes);
+      const data = await planRoute(origin, destination, modes, constraint);
       setResult(data);
       setMapOrigin(origin);
       setMapDest(destination);
@@ -58,6 +60,12 @@ export default function Home() {
             <a className="flex items-center gap-4 px-4 py-3 rounded bg-tertiary-container/10 text-tertiary border-l-[3px] border-tertiary font-semibold text-xs uppercase tracking-widest" href="#">
               <span className="material-symbols-outlined">search</span>
               <span>Search</span>
+            </a>
+          </li>
+          <li>
+            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/plan-day">
+              <span className="material-symbols-outlined">calendar_today</span>
+              <span>Plan Day</span>
             </a>
           </li>
           <li>
@@ -96,6 +104,7 @@ export default function Home() {
                 <strong>Error:</strong> {error}
               </div>
             )}
+            <ReasoningPanel loading={loading} reasoning={result?.reasoning ?? null} />
             {result && !loading && <ResultsPanel comparison={result} />}
             {!result && !loading && !error && (
               <div className="flex flex-col items-center justify-center h-48 text-on-surface-variant text-sm text-center gap-2">
@@ -117,6 +126,10 @@ export default function Home() {
         <a className="flex flex-col items-center text-tertiary font-semibold text-[10px] uppercase tracking-widest" href="#">
           <span className="material-symbols-outlined mb-1">explore</span>
           Explore
+        </a>
+        <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="/plan-day">
+          <span className="material-symbols-outlined mb-1">calendar_today</span>
+          Plan Day
         </a>
         <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="#">
           <span className="material-symbols-outlined mb-1">map</span>

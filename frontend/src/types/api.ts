@@ -60,6 +60,13 @@ export interface RouteOption {
   cost_source: string;
 }
 
+export interface AgentReasoning {
+  recommended_mode: TransitMode;
+  summary: string;
+  justification: string;
+  constraint_analysis: string | null;
+}
+
 export interface RouteComparison {
   origin: string;
   destination: string;
@@ -68,4 +75,87 @@ export interface RouteComparison {
   fastest: RouteOption | null;
   cheapest: RouteOption | null;
   savings_vs_driving_kg: number | null;
+  reasoning: AgentReasoning | null;
+}
+
+export interface CalendarEvent {
+  summary: string;
+  location: string;
+  start: string;
+  end: string;
+}
+
+export interface TransitRecommendation {
+  mode: TransitMode;
+  duration_min: number;
+  emissions_g: number;
+  cost_usd: number;
+  summary: string;
+}
+
+export interface TransitWindow {
+  from_event: string;
+  to_event: string;
+  origin: string;
+  destination: string;
+  depart_after: string;
+  arrive_by: string;
+  available_min: number;
+  recommended: TransitRecommendation;
+  route: RouteComparison;
+}
+
+export interface DayPlanRequest {
+  date: string;
+  session_id: string | null;
+  home_address: string;
+}
+
+export interface DayPlanResponse {
+  date: string;
+  events: CalendarEvent[];
+  transit_windows: TransitWindow[];
+  total_emissions_g: number;
+  total_cost_usd: number;
+  total_transit_min: number;
+}
+
+// Auth types
+export interface AuthUrlResponse {
+  auth_url: string;
+  state: string;
+}
+
+export interface AuthCallbackResponse {
+  session_id: string;
+  message: string;
+}
+
+// Error types
+export interface ValidationErrorDetail {
+  field: string;
+  reason: string;
+}
+
+export interface ErrorResponse {
+  status_code: number;
+  message: string;
+  detail: string | null;
+  errors: ValidationErrorDetail[] | null;
+}
+
+// Factor types
+export interface EmissionFactorResponse {
+  mode: string;
+  g_co2e_per_pkm: number;
+  source: string;
+  notes: string;
+}
+
+export interface CostFactorResponse {
+  mode: string;
+  base_fare: number;
+  per_km_cost: number;
+  source: string;
+  notes: string;
 }

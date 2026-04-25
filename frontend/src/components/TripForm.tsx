@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { ALL_MODES, MODE_LABELS, TransitMode } from "@/types/api";
+import ConstraintInput from "./ConstraintInput";
 
 interface TripFormProps {
-  onSubmit: (origin: string, destination: string, modes: TransitMode[] | null) => void;
+  onSubmit: (origin: string, destination: string, modes: TransitMode[] | null, constraint: string | null) => void;
   loading: boolean;
 }
 
@@ -12,6 +13,7 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [selectedModes, setSelectedModes] = useState<TransitMode[]>([]);
+  const [constraint, setConstraint] = useState("");
   const [errors, setErrors] = useState<{ origin?: string; destination?: string }>({});
 
   function toggleMode(mode: TransitMode) {
@@ -27,7 +29,7 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
     if (!destination.trim()) newErrors.destination = "Destination is required.";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setErrors({});
-    onSubmit(origin.trim(), destination.trim(), selectedModes.length > 0 ? selectedModes : null);
+    onSubmit(origin.trim(), destination.trim(), selectedModes.length > 0 ? selectedModes : null, constraint.trim() || null);
   }
 
   const inputClass =
@@ -110,6 +112,8 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
           })}
         </div>
       </div>
+
+      <ConstraintInput value={constraint} onChange={setConstraint} disabled={loading} />
 
       <button
         type="submit"
