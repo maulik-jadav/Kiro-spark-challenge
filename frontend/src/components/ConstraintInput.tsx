@@ -49,7 +49,6 @@ export default function ConstraintInput({ value, onChange, disabled }: Constrain
     setSupported(getSpeechRecognition() !== null);
   }, []);
 
-  // Clean up recognition on unmount
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
@@ -57,13 +56,21 @@ export default function ConstraintInput({ value, onChange, disabled }: Constrain
         recognitionRef.current.onerror = null;
         recognitionRef.current.onend = null;
         recognitionRef.current.abort();
+        recognitionRef.current = null;
       }
     };
   }, []);
 
   function toggleListening() {
     if (listening) {
-      recognitionRef.current?.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+      setListening(false);
       return;
     }
 
@@ -77,16 +84,22 @@ export default function ConstraintInput({ value, onChange, disabled }: Constrain
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0]?.[0]?.transcript;
-      if (transcript) {
-        onChange(transcript);
-      }
+      if (transcript) onChange(transcript);
     };
 
     recognition.onerror = () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
       setListening(false);
     };
 
     recognition.onend = () => {
+      recognitionRef.current = null;
       setListening(false);
     };
 
