@@ -122,3 +122,60 @@ class TestOrchestrator:
         result = await plan_route("A", "B")
         assert result.savings_vs_driving_kg is not None
         assert result.savings_vs_driving_kg >= 0
+
+
+class TestOrchestratorConstraintPassthrough:
+    """Integration tests verifying the orchestrator passes the constraint
+    argument through to decide() unchanged.  Requirements: 4.1, 4.2"""
+
+    @pytest.fixture
+    def mock_routes(self):
+        """Patch get_routes to return mock data instead of calling the live API."""
+        with patch("agents.orchestrator.get_routes", new_callable=AsyncMock) as mock:
+            mock.return_value = _mock_raw_routes()
+            yield mock
+
+    @pytest.fixture
+    def mock_decide(self):
+        """Patch decide() and capture its call arguments."""
+        with patch("agents.orchestrator.decide", new_callable=AsyncMock) as mock:
+            mock.return_value = AgentReasoning(
+                recommended_mode=TransitMode.BICYCLING,
+                summary="Take bicycling — lowest emissions.",
+                justification="Bicycling produces zero direct emissions.",
+            )
+            yield mock
+
+    @pytest.mark.asyncio
+    async def test_constraint_none_passed_to_decide(self, mock_routes, mock_decide):
+        """plan_route(constraint=None) passes None to decide()."""
+        await plan_route("A", "B", constraint=None)
+        mock_decide.assert_called_once()
+        _, kwargs = mock_decide.call_args
+        assert kwargs["constraint"] is None
+
+    @pytest.mark.asyncio
+    async def test_constraint_string_passed_to_decide(self, mock_routes, mock_decide):
+        """plan_route(constraint='Arrive by 10 AM') passes the exact string to decide()."""
+        await plan_route("A", "B", constraint="Arrive by 10 AM")
+        mock_decide.assert_called_once()
+        _, kwargs = mock_decide.call_args
+        assert kwargs["constraint"] == "Arrive by 10 AM"
+
+    @pytest.mark.asyncio
+    async def test_override_passthrough(self, mock_routes):
+        """When decide() returns an overridden mode, RouteComparison reflects it."""
+        overridden_reasoning = AgentReasoning(
+            recommended_mode=TransitMode.BUS,
+            summary="Take bus — cheapest option satisfying your budget constraint.",
+            justification="Bus is the cheapest mode at $2.50.",
+            constraint_analysis="Bus satisfies the budget constraint.",
+            constraint_override=True,
+        )
+        with patch("agents.orchestrator.decide", new_callable=AsyncMock) as mock_decide:
+            mock_decide.return_value = overridden_reasoning
+            result = await plan_route("A", "B", constraint="Budget under $5")
+
+        assert result.reasoning is not None
+        assert result.reasoning.recommended_mode == TransitMode.BUS
+        assert result.reasoning.constraint_override is True

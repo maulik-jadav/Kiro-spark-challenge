@@ -53,6 +53,14 @@ export default function ReasoningPanel({ reasoning, loading }: ReasoningPanelPro
           {reasoning.summary}
         </p>
 
+        {/* Override badge */}
+        {reasoning.constraint_override && (
+          <div className="flex items-center gap-1.5 mt-sm text-xs text-tertiary">
+            <span className="material-symbols-outlined text-[16px]">swap_horiz</span>
+            Recommendation adjusted based on your constraint
+          </div>
+        )}
+
         {/* Expand toggle */}
         <button
           onClick={() => setExpanded((v) => !v)}

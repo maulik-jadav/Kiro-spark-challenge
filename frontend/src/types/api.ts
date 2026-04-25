@@ -78,6 +78,7 @@ export interface AgentReasoning {
   summary: string;
   justification: string;
   constraint_analysis: string | null;
+  constraint_override: boolean;
 }
 
 export interface RouteComparison {

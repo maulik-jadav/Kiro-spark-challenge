@@ -65,6 +65,10 @@ class AgentReasoning(BaseModel):
         default=None,
         description="How the recommendation satisfies the user's constraint",
     )
+    constraint_override: bool = Field(
+        default=False,
+        description="True when the LLM selected a different mode than the scoring engine's pick due to a constraint.",
+    )
 
 
 class ScoredRoute(BaseModel):

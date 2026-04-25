@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Groq — used by the decision agent (runs Llama on fast inference)
     groq_api_key: str = ""
 
+    # Routing mode: "live" uses Google Maps API, "mock" uses local mock data
+    routing_mode: str = "mock"
+
     # Server
     host: str = "0.0.0.0"
     port: int = 8000
