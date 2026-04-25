@@ -7,8 +7,8 @@
 
 @layer base {
   body {
-    background-color: #f7f9fb;
-    color: #191c1e;
+    background-color: #f5f7f2;
+    color: #1a2e1e;
     font-family: 'Inter', sans-serif;
   }
 }
@@ -22,7 +22,7 @@
 ::-webkit-scrollbar-thumb { background: #e0e3e5; }
 
 .shadow-ambient {
-  box-shadow: 0 8px 32px -4px rgba(68, 40, 0, 0.1), 0 4px 12px -2px rgba(68, 40, 0, 0.05);
+  box-shadow: 0 8px 32px -4px rgba(52, 78, 65, 0.12), 0 4px 12px -2px rgba(52, 78, 65, 0.06);
 }
 
 /* ── Earth Globe ── */
@@ -35,7 +35,6 @@
   0%, 100% { opacity: 0.55; }
   50%       { opacity: 0.75; }
 }
-
 @keyframes orbit-ring {
   from { transform: rotateX(75deg) rotateZ(0deg); }
   to   { transform: rotateX(75deg) rotateZ(360deg); }

@@ -80,7 +80,7 @@ export default function PlanDayPage() {
       {/* Mobile TopAppBar */}
       <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface-container-lowest/80 backdrop-blur-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] border-b border-outline-variant lg:hidden">
         <span className="text-xl font-headline font-bold tracking-tighter text-tertiary">
-          PathProject
+          PathFinder
         </span>
         <span className="material-symbols-outlined text-outline cursor-pointer">
           account_circle
@@ -91,7 +91,7 @@ export default function PlanDayPage() {
       <nav className="hidden lg:flex flex-col h-full pt-8 pb-8 px-4 fixed left-0 w-sidebar_width border-r border-outline-variant bg-surface-container-lowest z-40 overflow-y-auto">
         <div className="mb-8 px-4">
           <h1 className="font-headline font-bold text-3xl text-tertiary tracking-tighter">
-            PathProject
+            PathFinder
           </h1>
           <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-widest mt-1">
             Logistics Intelligence

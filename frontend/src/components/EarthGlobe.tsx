@@ -12,7 +12,7 @@ export default function EarthGlobe({ size = 120 }: { size?: number }) {
         className="earth-glow absolute rounded-full"
         style={{
           inset: -size * 0.15,
-          background: "radial-gradient(circle, rgba(0,107,95,0.3) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(88,129,87,0.3) 0%, transparent 70%)",
           filter: `blur(${size * 0.14}px)`,
         }}
       />
@@ -53,8 +53,8 @@ export default function EarthGlobe({ size = 120 }: { size?: number }) {
             inset: 0,
             borderRadius: "50%",
             background: `
-              radial-gradient(circle at 35% 35%, rgba(120,200,255,0.15) 0%, transparent 60%),
-              radial-gradient(circle at 70% 70%, rgba(0,53,46,0.2) 0%, transparent 50%)
+              radial-gradient(circle at 35% 35%, rgba(163,177,138,0.15) 0%, transparent 60%),
+              radial-gradient(circle at 70% 70%, rgba(52,78,65,0.2) 0%, transparent 50%)
             `,
           }}
         />
@@ -82,7 +82,7 @@ export default function EarthGlobe({ size = 120 }: { size?: number }) {
           left: "50%",
           marginTop: -(size * 1.6) / 2,
           marginLeft: -(size * 1.6) / 2,
-          border: "1.5px solid rgba(0,107,95,0.35)",
+          border: "1.5px solid rgba(88,129,87,0.4)",
           borderRadius: "50%",
         }}
       />
@@ -97,9 +97,9 @@ export default function EarthGlobe({ size = 120 }: { size?: number }) {
           left: "50%",
           marginTop: -3.5,
           marginLeft: -3.5,
-          background: "#3cddc7",
+          background: "#A3B18A",
           borderRadius: "50%",
-          boxShadow: "0 0 6px 2px rgba(60,221,199,0.6)",
+          boxShadow: "0 0 6px 2px rgba(163,177,138,0.7)",
         }}
       />
     </div>

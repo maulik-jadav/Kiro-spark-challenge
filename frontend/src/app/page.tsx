@@ -50,7 +50,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <EarthGlobe size={32} />
           <span className="text-xl font-headline font-bold tracking-tighter text-tertiary">
-            PathProject
+          PathFinder
           </span>
         </div>
         <span className="material-symbols-outlined text-outline cursor-pointer">account_circle</span>
@@ -67,9 +67,9 @@ export default function Home() {
         <div className="mb-8 px-4 flex items-center gap-4">
           <EarthGlobe size={56} />
           <div>
-            <h1 className="font-headline font-bold text-3xl text-tertiary tracking-tighter">PathProject</h1>
+            <h1 className="font-headline font-bold text-3xl text-tertiary tracking-tighter">PathFinder</h1>
             <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-widest mt-1">
-              Logistics Intelligence
+              Eco Route Intelligence
             </p>
           </div>
         </div>
