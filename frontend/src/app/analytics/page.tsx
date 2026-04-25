@@ -139,18 +139,21 @@ function AnalyticsContent() {
         >
           <div className="flex items-center gap-3">
             <EarthGlobe size={32} />
-            <span className="text-xl font-headline font-bold tracking-tighter text-tertiary">PathFinder</span>
+            <span className="text-xl font-headline font-bold tracking-tighter text-tertiary">ECOpath</span>
           </div>
           <span className="material-symbols-outlined text-outline cursor-pointer">account_circle</span>
         </motion.header>
 
         {/* Main — offset by sidebar on desktop */}
-        <main className="flex-1 lg:pl-[360px] pt-16 lg:pt-0 p-md lg:p-lg">
+        <main
+          className="flex-1 pt-16 lg:pt-0 p-md lg:p-lg transition-all duration-300"
+          style={{ paddingLeft: "var(--sidenav-w, 0px)" } as React.CSSProperties}
+        >
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="max-w-3xl mx-auto"
+            className="max-w-3xl mx-auto pt-8"
           >
             {/* Header row with rank badge */}
             <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
@@ -230,18 +233,16 @@ function AnalyticsContent() {
                 {/* Pie + insights */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <ChartCard title="Emissions by Transport Mode" subtitle="kg CO₂ total">
-                    <ResponsiveContainer width="100%" height={320}>
+                    <ResponsiveContainer width="100%" height={280}>
                       <PieChart>
                         <Pie
                           data={pieData}
                           cx="50%"
                           cy="50%"
-                          outerRadius={120}
+                          outerRadius={110}
                           dataKey="value"
-                          label={({ name, percent }) =>
-                            percent > 0.04 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
-                          }
-                          labelLine={true}
+                          label={false}
+                          labelLine={false}
                         >
                           {pieData.map((_, i) => (
                             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
@@ -253,6 +254,21 @@ function AnalyticsContent() {
                         />
                       </PieChart>
                     </ResponsiveContainer>
+                    {/* Legend */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 px-1">
+                      {pieData.map((entry, i) => (
+                        <div key={entry.name} className="flex items-center gap-1.5">
+                          <span
+                            className="inline-block w-3 h-3 rounded-sm flex-shrink-0"
+                            style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
+                          />
+                          <span className="text-xs text-on-surface-variant">
+                            {entry.name}{" "}
+                            <span className="font-semibold text-on-surface">{entry.value} kg</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </ChartCard>
 
                   {/* Insight card */}

@@ -283,13 +283,13 @@ describe("AnalyticsPage", () => {
 
   // ── Page header & navigation ─────────────────────────────────────────────
 
-  it("renders the PathFinder brand name", async () => {
+  it("renders the ECOpath brand name", async () => {
     mockSupabaseResult = { data: [], error: null };
 
     render(<AnalyticsPage />);
 
     await waitFor(() => {
-      expect(screen.getAllByText("PathFinder").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("ECOpath").length).toBeGreaterThan(0);
     });
   });
 

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PathFinder",
-  description: "PathFinder — compare routes by emissions, speed, and cost.",
+  title: "ECOpath",
+  description: "ECOpath — compare routes by emissions, speed, and cost.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

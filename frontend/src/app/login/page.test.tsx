@@ -71,9 +71,9 @@ describe("LoginPage", () => {
 
   // ── Rendering ────────────────────────────────────────────────────────────
 
-  it("renders the PathFinder brand name", () => {
+  it("renders the ECOpath brand name", () => {
     render(<LoginPage />);
-    expect(screen.getByText("PathFinder")).toBeInTheDocument();
+    expect(screen.getByText("ECOpath")).toBeInTheDocument();
   });
 
   it("renders the EarthGlobe component", () => {

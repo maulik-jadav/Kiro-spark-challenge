@@ -232,7 +232,7 @@ describe("TravelHistoryPage", () => {
     render(<TravelHistoryPage />);
 
     await waitFor(() => {
-      expect(screen.getAllByText("PathFinder").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("ECOpath").length).toBeGreaterThan(0);
       expect(screen.getAllByText(/travel history/i).length).toBeGreaterThan(0);
     });
   });

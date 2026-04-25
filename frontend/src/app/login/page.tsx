@@ -44,7 +44,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8 gap-3">
           <EarthGlobe size={56} />
-          <h1 className="font-headline font-bold text-3xl text-tertiary tracking-tighter">PathFinder</h1>
+          <h1 className="font-headline font-bold text-3xl text-tertiary tracking-tighter">ECOpath</h1>
           <p className="text-xs text-on-surface-variant uppercase tracking-widest font-semibold">Eco Route Intelligence</p>
         </div>
 

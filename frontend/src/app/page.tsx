@@ -7,6 +7,7 @@ import ResultsPanel from "@/components/ResultsPanel";
 import ReasoningPanel from "@/components/ReasoningPanel";
 import MapView from "@/components/MapView";
 import EarthGlobe from "@/components/EarthGlobe";
+import SideNav from "@/components/SideNav";
 import { planRoute } from "@/lib/api";
 import type { RouteComparison, TransitMode, Priority } from "@/types/api";
 
@@ -51,70 +52,20 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <EarthGlobe size={32} />
           <span className="text-xl font-headline font-bold tracking-tighter text-tertiary">
-          PathFinder
+          ECOpath
           </span>
         </div>
         <span className="material-symbols-outlined text-outline cursor-pointer">account_circle</span>
       </motion.header>
 
       {/* Desktop SideNav */}
-      <motion.nav
-        initial={{ x: -80, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.55, ease: "easeOut" }}
-        className="hidden lg:flex flex-col h-full pt-8 pb-8 px-4 fixed left-0 w-sidebar_width border-r border-outline-variant bg-surface-container-lowest z-40 overflow-y-auto"
-      >
-        {/* Logo + Globe */}
-        <div className="mb-8 px-4 flex items-center gap-4">
-          <EarthGlobe size={56} />
-          <div>
-            <h1 className="font-headline font-bold text-3xl text-tertiary tracking-tighter">PathFinder</h1>
-            <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-widest mt-1">
-              Eco Route Intelligence
-            </p>
-          </div>
-        </div>
-
-        <ul className="flex-1 space-y-1">
-          <li>
-            <a className="flex items-center gap-4 px-4 py-3 rounded bg-tertiary-container/10 text-tertiary border-l-[3px] border-tertiary font-semibold text-xs uppercase tracking-widest" href="#">
-              <span className="material-symbols-outlined">search</span>
-              <span>Search</span>
-            </a>
-          </li>
-          <li>
-            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/plan-day">
-              <span className="material-symbols-outlined">calendar_today</span>
-              <span>Plan Day</span>
-            </a>
-          </li>
-          <li>
-            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/travel-history">
-              <span className="material-symbols-outlined">history</span>
-              <span>Travel History</span>
-            </a>
-          </li>
-          <li>
-            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/analytics">
-              <span className="material-symbols-outlined">eco</span>
-              <span>Analytics</span>
-            </a>
-          </li>
-          <li>
-            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/leaderboard">
-              <span className="material-symbols-outlined">leaderboard</span>
-              <span>Leaderboard</span>
-            </a>
-          </li>
-        </ul>
-        <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest mt-4" href="/login">
-          <span className="material-symbols-outlined">logout</span>
-          <span>Sign Out</span>
-        </a>
-      </motion.nav>
+      <SideNav />
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col lg:flex-row lg:pl-sidebar_width min-h-screen pt-16 lg:pt-0">
+      <main
+        className="flex-1 flex flex-col lg:flex-row min-h-screen pt-16 lg:pt-0 transition-all duration-300"
+        style={{ paddingLeft: "var(--sidenav-w, 0px)" } as React.CSSProperties}
+      >
         {/* Left panel */}
         <motion.aside
           initial={{ x: -40, opacity: 0 }}

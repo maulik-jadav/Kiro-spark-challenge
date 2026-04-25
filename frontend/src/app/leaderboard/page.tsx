@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import EarthGlobe from "@/components/EarthGlobe";
 import AuthGuard from "@/components/AuthGuard";
+import SideNav from "@/components/SideNav";
 import { supabase } from "@/lib/supabase";
 
 interface LeaderboardEntry {
@@ -83,60 +84,20 @@ function LeaderboardContent() {
       >
         <div className="flex items-center gap-3">
           <EarthGlobe size={32} />
-          <span className="text-xl font-headline font-bold tracking-tighter text-tertiary">PathFinder</span>
+          <span className="text-xl font-headline font-bold tracking-tighter text-tertiary">ECOpath</span>
         </div>
         <button onClick={handleSignOut} className="material-symbols-outlined text-outline cursor-pointer">logout</button>
       </motion.header>
 
       {/* Desktop SideNav */}
-      <motion.nav
-        initial={{ x: -80, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.55, ease: "easeOut" }}
-        className="hidden lg:flex flex-col h-full pt-8 pb-8 px-4 fixed left-0 w-sidebar_width border-r border-outline-variant bg-surface-container-lowest z-40 overflow-y-auto"
-      >
-        <div className="mb-8 px-4 flex items-center gap-4">
-          <EarthGlobe size={56} />
-          <div>
-            <h1 className="font-headline font-bold text-3xl text-tertiary tracking-tighter">PathFinder</h1>
-            <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-widest mt-1">Eco Route Intelligence</p>
-          </div>
-        </div>
-        <ul className="flex-1 space-y-1">
-          {[
-            { href: "/", icon: "search", label: "Search" },
-            { href: "/plan-day", icon: "calendar_today", label: "Plan Day" },
-            { href: "/travel-history", icon: "history", label: "Travel History" },
-            { href: "/analytics", icon: "eco", label: "Analytics" },
-            { href: "/leaderboard", icon: "leaderboard", label: "Leaderboard", active: true },
-          ].map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={`flex items-center gap-4 px-4 py-3 rounded border-l-[3px] font-semibold text-xs uppercase tracking-widest transition-colors ${
-                  item.active
-                    ? "bg-tertiary-container/10 text-tertiary border-tertiary"
-                    : "text-on-surface-variant border-transparent hover:bg-surface-variant"
-                }`}
-              >
-                <span className="material-symbols-outlined">{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest mt-4"
-        >
-          <span className="material-symbols-outlined">logout</span>
-          <span>Sign Out</span>
-        </button>
-      </motion.nav>
+      <SideNav />
 
       {/* Main */}
-      <main className="flex-1 lg:pl-sidebar_width pt-16 lg:pt-0 p-md lg:p-lg">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="max-w-3xl mx-auto">
+      <main
+        className="flex-1 pt-16 lg:pt-0 p-md lg:p-lg transition-all duration-300"
+        style={{ paddingLeft: "var(--sidenav-w, 0px)" } as React.CSSProperties}
+      >
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="max-w-3xl mx-auto pt-8">
           <div className="mb-6">
             <h1 className="font-headline font-bold text-2xl text-on-background">Leaderboard</h1>
             <p className="text-sm text-on-surface-variant mt-1">

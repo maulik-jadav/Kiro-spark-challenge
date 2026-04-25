@@ -25,7 +25,7 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
     if (!destination.trim()) newErrors.destination = "Destination is required.";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setErrors({});
-    onSubmit(origin.trim(), destination.trim(), selectedModes.length > 0 ? selectedModes : null, constraint.trim() || null);
+    onSubmit(origin.trim(), destination.trim(), null, constraint.trim() || null, "best_tradeoff");
   }
 
   const inputClass =
