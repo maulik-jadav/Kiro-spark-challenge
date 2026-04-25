@@ -154,13 +154,9 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
         </div>
       </motion.div>
 
-<<<<<<< HEAD
       <ConstraintInput value={constraint} onChange={setConstraint} disabled={loading} />
 
-      <button
-=======
       <motion.button
->>>>>>> c140d5a17d0e3239ac0cebd0fd17213dc5d3ae01
         type="submit"
         disabled={loading}
         initial={{ opacity: 0, y: 8 }}
