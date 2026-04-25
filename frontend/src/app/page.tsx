@@ -89,24 +89,28 @@ export default function Home() {
             </a>
           </li>
           <li>
-            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="#">
-              <span className="material-symbols-outlined">directions_car</span>
-              <span>Routes</span>
+            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/travel-history">
+              <span className="material-symbols-outlined">history</span>
+              <span>Travel History</span>
             </a>
           </li>
           <li>
-            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="#">
+            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/analytics">
               <span className="material-symbols-outlined">eco</span>
               <span>Analytics</span>
             </a>
           </li>
           <li>
-            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="#">
-              <span className="material-symbols-outlined">settings</span>
-              <span>Settings</span>
+            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/leaderboard">
+              <span className="material-symbols-outlined">leaderboard</span>
+              <span>Leaderboard</span>
             </a>
           </li>
         </ul>
+        <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest mt-4" href="/login">
+          <span className="material-symbols-outlined">logout</span>
+          <span>Sign Out</span>
+        </a>
       </motion.nav>
 
       {/* Main content */}
@@ -161,13 +165,13 @@ export default function Home() {
           <span className="material-symbols-outlined mb-1">calendar_today</span>
           Plan Day
         </a>
-        <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="#">
-          <span className="material-symbols-outlined mb-1">map</span>
-          Planned
+        <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="/travel-history">
+          <span className="material-symbols-outlined mb-1">history</span>
+          History
         </a>
-        <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="#">
-          <span className="material-symbols-outlined mb-1">tune</span>
-          Settings
+        <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="/analytics">
+          <span className="material-symbols-outlined mb-1">eco</span>
+          Analytics
         </a>
       </nav>
     </div>

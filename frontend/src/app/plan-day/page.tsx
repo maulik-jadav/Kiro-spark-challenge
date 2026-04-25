@@ -101,55 +101,40 @@ export default function PlanDayPage() {
 
         <ul className="flex-1 space-y-1">
           <li>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest"
-              href="/"
-            >
+            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/">
               <span className="material-symbols-outlined">search</span>
               <span>Search</span>
             </a>
           </li>
           <li>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded bg-tertiary-container/10 text-tertiary border-l-[3px] border-tertiary font-semibold text-xs uppercase tracking-widest"
-              href="/plan-day"
-            >
-              <span className="material-symbols-outlined">
-                calendar_today
-              </span>
+            <a className="flex items-center gap-4 px-4 py-3 rounded bg-tertiary-container/10 text-tertiary border-l-[3px] border-tertiary font-semibold text-xs uppercase tracking-widest" href="/plan-day">
+              <span className="material-symbols-outlined">calendar_today</span>
               <span>Plan Day</span>
             </a>
           </li>
           <li>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest"
-              href="#"
-            >
-              <span className="material-symbols-outlined">
-                directions_car
-              </span>
-              <span>Routes</span>
+            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/travel-history">
+              <span className="material-symbols-outlined">history</span>
+              <span>Travel History</span>
             </a>
           </li>
           <li>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest"
-              href="#"
-            >
+            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/analytics">
               <span className="material-symbols-outlined">eco</span>
               <span>Analytics</span>
             </a>
           </li>
           <li>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest"
-              href="#"
-            >
-              <span className="material-symbols-outlined">settings</span>
-              <span>Settings</span>
+            <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest" href="/leaderboard">
+              <span className="material-symbols-outlined">leaderboard</span>
+              <span>Leaderboard</span>
             </a>
           </li>
         </ul>
+        <a className="flex items-center gap-4 px-4 py-3 rounded text-on-surface-variant border-l-[3px] border-transparent hover:bg-surface-variant transition-colors font-semibold text-xs uppercase tracking-widest mt-4" href="/login">
+          <span className="material-symbols-outlined">logout</span>
+          <span>Sign Out</span>
+        </a>
       </nav>
 
       {/* Main content — offset by sidebar on desktop */}
@@ -279,28 +264,17 @@ export default function PlanDayPage() {
 
       {/* Mobile BottomNav */}
       <nav className="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-surface-container-lowest rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] border-t border-outline-variant">
-        <a
-          className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary"
-          href="/"
-        >
-          <span className="material-symbols-outlined mb-1">explore</span>
-          Explore
+        <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="/">
+          <span className="material-symbols-outlined mb-1">explore</span>Explore
         </a>
-        <a
-          className="flex flex-col items-center text-tertiary font-semibold text-[10px] uppercase tracking-widest"
-          href="/plan-day"
-        >
-          <span className="material-symbols-outlined mb-1">
-            calendar_today
-          </span>
-          Plan Day
+        <a className="flex flex-col items-center text-tertiary font-semibold text-[10px] uppercase tracking-widest" href="/plan-day">
+          <span className="material-symbols-outlined mb-1">calendar_today</span>Plan Day
         </a>
-        <a
-          className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary"
-          href="#"
-        >
-          <span className="material-symbols-outlined mb-1">tune</span>
-          Settings
+        <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="/travel-history">
+          <span className="material-symbols-outlined mb-1">history</span>History
+        </a>
+        <a className="flex flex-col items-center text-on-surface-variant font-semibold text-[10px] uppercase tracking-widest hover:text-tertiary" href="/leaderboard">
+          <span className="material-symbols-outlined mb-1">leaderboard</span>Board
         </a>
       </nav>
     </div>

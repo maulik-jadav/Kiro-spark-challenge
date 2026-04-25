@@ -9,11 +9,13 @@
     "test": "jest --testPathPattern=ConstraintInput.bug.test"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.104.1",
     "@vis.gl/react-google-maps": "^1.1.1",
     "framer-motion": "^12.38.0",
     "next": "14.2.5",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

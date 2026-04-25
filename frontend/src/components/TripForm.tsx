@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ALL_MODES, MODE_LABELS, TransitMode } from "@/types/api";
-import type { Priority } from "@/types/api";
+import { TransitMode, Priority } from "@/types/api";
 import ConstraintInput from "./ConstraintInput";
 import PlaceAutocompleteInput from "./PlaceAutocompleteInput";
 
@@ -15,16 +14,9 @@ interface TripFormProps {
 export default function TripForm({ onSubmit, loading }: TripFormProps) {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
-  const [selectedModes, setSelectedModes] = useState<TransitMode[]>([]);
   const [constraint, setConstraint] = useState("");
   const [priority, setPriority] = useState<Priority>("best_tradeoff");
   const [errors, setErrors] = useState<{ origin?: string; destination?: string }>({});
-
-  function toggleMode(mode: TransitMode) {
-    setSelectedModes((prev) =>
-      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]
-    );
-  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,7 +25,7 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
     if (!destination.trim()) newErrors.destination = "Destination is required.";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setErrors({});
-    onSubmit(origin.trim(), destination.trim(), selectedModes.length > 0 ? selectedModes : null, constraint.trim() || null, priority);
+    onSubmit(origin.trim(), destination.trim(), selectedModes.length > 0 ? selectedModes : null, constraint.trim() || null);
   }
 
   const inputClass =
@@ -121,43 +113,6 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
           </motion.p>
         )}
       </div>
-
-      <div className="h-px w-full bg-outline-variant" />
-
-      {/* Mode chips */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, delay: 0.15 }}
-      >
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mb-2">
-          Transit modes <span className="font-normal normal-case tracking-normal">(blank = all)</span>
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {ALL_MODES.map((mode, i) => {
-            const active = selectedModes.includes(mode);
-            return (
-              <motion.button
-                key={mode}
-                type="button"
-                onClick={() => toggleMode(mode)}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.18 + i * 0.04, duration: 0.25 }}
-                whileTap={{ scale: 0.92 }}
-                whileHover={{ scale: 1.05 }}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-200 ${
-                  active
-                    ? "bg-tertiary text-on-tertiary border-tertiary"
-                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-tertiary"
-                }`}
-              >
-                {MODE_LABELS[mode]}
-              </motion.button>
-            );
-          })}
-        </div>
-      </motion.div>
 
       <ConstraintInput value={constraint} onChange={setConstraint} disabled={loading} />
 
