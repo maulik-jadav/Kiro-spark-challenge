@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { MODE_LABELS, RouteOption } from "@/types/api";
 
 interface RouteCardProps {
@@ -8,6 +9,7 @@ interface RouteCardProps {
   isGreenest: boolean;
   isFastest: boolean;
   isCheapest: boolean;
+  index?: number;
 }
 
 const BADGE_CONFIG = {
@@ -37,7 +39,7 @@ const BADGE_CONFIG = {
   },
 };
 
-export default function RouteCard({ option, isGreenest, isFastest, isCheapest }: RouteCardProps) {
+export default function RouteCard({ option, isGreenest, isFastest, isCheapest, index = 0 }: RouteCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const badge = isFastest
@@ -49,20 +51,27 @@ export default function RouteCard({ option, isGreenest, isFastest, isCheapest }:
     : null;
 
   return (
-    <div
-      className={`border border-outline-variant bg-surface-container-lowest rounded border-l-[3px] relative cursor-pointer transition-colors ${
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
+      whileHover={{ scale: 1.01, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
+      className={`border border-outline-variant bg-surface-container-lowest rounded border-l-[3px] relative cursor-pointer transition-shadow ${
         badge ? `${badge.border} ${badge.ring}` : "border-l-outline-variant"
       }`}
     >
       <div className="p-md">
         {/* Badge */}
         {badge && (
-          <div
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.1 + 0.2, duration: 0.3 }}
             className={`absolute top-md right-md ${badge.bg} ${badge.text} font-semibold text-[11px] uppercase tracking-widest px-sm py-xs rounded flex items-center gap-1`}
           >
             <span className="material-symbols-outlined text-[14px]">{badge.icon}</span>
             {badge.label}
-          </div>
+          </motion.div>
         )}
 
         {/* Mode + duration */}
@@ -92,44 +101,68 @@ export default function RouteCard({ option, isGreenest, isFastest, isCheapest }:
 
         {/* Expand toggle */}
         {option.segments.length > 0 && (
-          <button
+          <motion.button
             onClick={() => setExpanded((v) => !v)}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setExpanded((v) => !v)}
-            className="mt-3 text-xs text-tertiary hover:underline focus:outline-none focus:ring-2 focus:ring-tertiary rounded"
+            whileTap={{ scale: 0.95 }}
+            className="mt-3 text-xs text-tertiary hover:underline focus:outline-none focus:ring-2 focus:ring-tertiary rounded flex items-center gap-1"
             aria-expanded={expanded}
           >
-            {expanded ? "▲ Hide segments" : "▼ Show segments"}
-          </button>
+            <motion.span
+              animate={{ rotate: expanded ? 180 : 0 }}
+              transition={{ duration: 0.25 }}
+              className="material-symbols-outlined text-[14px]"
+            >
+              expand_more
+            </motion.span>
+            {expanded ? "Hide segments" : "Show segments"}
+          </motion.button>
         )}
       </div>
 
-      {/* Segments table */}
-      {expanded && (
-        <div className="border-t border-outline-variant overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-surface-container-low text-on-surface-variant uppercase tracking-widest">
-              <tr>
-                <th className="px-md py-sm">Mode</th>
-                <th className="px-md py-sm">Distance</th>
-                <th className="px-md py-sm">Duration</th>
-                <th className="px-md py-sm">Emissions</th>
-                <th className="px-md py-sm">Cost</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant">
-              {option.segments.map((seg, i) => (
-                <tr key={i} className="hover:bg-surface-container-low">
-                  <td className="px-md py-sm font-medium text-on-surface">{MODE_LABELS[seg.mode]}</td>
-                  <td className="px-md py-sm text-on-surface-variant tabular-nums">{seg.distance_km.toFixed(1)} km</td>
-                  <td className="px-md py-sm text-on-surface-variant tabular-nums">{Math.round(seg.duration_min)} min</td>
-                  <td className="px-md py-sm text-on-surface-variant tabular-nums">{seg.emissions_g.toFixed(0)} g</td>
-                  <td className="px-md py-sm text-on-surface-variant tabular-nums">${seg.cost_usd.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+      {/* Segments table — animated expand */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            key="segments"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-outline-variant overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase tracking-widest">
+                  <tr>
+                    <th className="px-md py-sm">Mode</th>
+                    <th className="px-md py-sm">Distance</th>
+                    <th className="px-md py-sm">Duration</th>
+                    <th className="px-md py-sm">Emissions</th>
+                    <th className="px-md py-sm">Cost</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant">
+                  {option.segments.map((seg, i) => (
+                    <motion.tr
+                      key={i}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05, duration: 0.2 }}
+                      className="hover:bg-surface-container-low transition-colors"
+                    >
+                      <td className="px-md py-sm font-medium text-on-surface">{MODE_LABELS[seg.mode]}</td>
+                      <td className="px-md py-sm text-on-surface-variant tabular-nums">{seg.distance_km.toFixed(1)} km</td>
+                      <td className="px-md py-sm text-on-surface-variant tabular-nums">{Math.round(seg.duration_min)} min</td>
+                      <td className="px-md py-sm text-on-surface-variant tabular-nums">{seg.emissions_g.toFixed(0)} g</td>
+                      <td className="px-md py-sm text-on-surface-variant tabular-nums">${seg.cost_usd.toFixed(2)}</td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
