@@ -71,6 +71,7 @@ def analyze_route(raw: RawRouteResult) -> RouteOption:
         total_cost_usd=round(total_cost, 2),
         emission_factor_source=factor.source,
         cost_source=cost_factor.source,
+        polyline=raw.polyline,
     )
 
 

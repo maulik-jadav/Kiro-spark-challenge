@@ -1,6 +1,7 @@
 import type {
   RouteComparison,
   TransitMode,
+  Priority,
   ErrorResponse,
   ValidationErrorDetail,
   DayPlanRequest,
@@ -65,7 +66,8 @@ export async function planRoute(
   origin: string,
   destination: string,
   modes: TransitMode[] | null,
-  constraint?: string | null
+  constraint?: string | null,
+  priority: Priority = "best_tradeoff"
 ): Promise<RouteComparison> {
   const res = await fetch("/api/v1/plan-route", {
     method: "POST",
@@ -75,6 +77,7 @@ export async function planRoute(
       destination,
       modes,
       constraint: constraint ?? null,
+      priority,
     }),
   });
 

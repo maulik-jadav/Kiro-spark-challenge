@@ -57,6 +57,7 @@ async def plan_route(
         destination=req.destination,
         modes=req.modes,
         constraint=req.constraint,
+        priority=req.priority,
         google_maps_api_key=settings.google_maps_api_key,
         groq_api_key=settings.groq_api_key,
     )

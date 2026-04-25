@@ -145,9 +145,14 @@ class TestPlanRouteEndpoint:
         assert "options" in data
         assert "greenest" in data
         assert "fastest" in data
-        assert "cheapest" in data
         assert "savings_vs_driving_kg" in data
         assert "reasoning" in data
+        # New scoring fields
+        assert "selected_priority" in data
+        assert "recommended_route" in data
+        assert "scored_routes" in data
+        # cheapest removed
+        assert "cheapest" not in data
 
     @pytest.mark.asyncio
     async def test_options_have_cost_fields(self, client):

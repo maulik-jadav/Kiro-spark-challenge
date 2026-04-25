@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ALL_MODES, MODE_LABELS, TransitMode } from "@/types/api";
+import type { Priority } from "@/types/api";
 import ConstraintInput from "./ConstraintInput";
 import PlaceAutocompleteInput from "./PlaceAutocompleteInput";
 
 interface TripFormProps {
-  onSubmit: (origin: string, destination: string, modes: TransitMode[] | null, constraint: string | null) => void;
+  onSubmit: (origin: string, destination: string, modes: TransitMode[] | null, constraint: string | null, priority: Priority) => void;
   loading: boolean;
 }
 
@@ -16,6 +17,7 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
   const [destination, setDestination] = useState("");
   const [selectedModes, setSelectedModes] = useState<TransitMode[]>([]);
   const [constraint, setConstraint] = useState("");
+  const [priority, setPriority] = useState<Priority>("best_tradeoff");
   const [errors, setErrors] = useState<{ origin?: string; destination?: string }>({});
 
   function toggleMode(mode: TransitMode) {
@@ -31,7 +33,7 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
     if (!destination.trim()) newErrors.destination = "Destination is required.";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setErrors({});
-    onSubmit(origin.trim(), destination.trim(), selectedModes.length > 0 ? selectedModes : null, constraint.trim() || null);
+    onSubmit(origin.trim(), destination.trim(), selectedModes.length > 0 ? selectedModes : null, constraint.trim() || null, priority);
   }
 
   const inputClass =
@@ -158,6 +160,43 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
       </motion.div>
 
       <ConstraintInput value={constraint} onChange={setConstraint} disabled={loading} />
+
+      {/* Priority selector */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.35, delay: 0.18 }}
+      >
+        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mb-2">
+          Priority
+        </p>
+        <div className="flex gap-1.5">
+          {([
+            { value: "fastest" as Priority, label: "Fastest", icon: "bolt" },
+            { value: "greenest" as Priority, label: "Greenest", icon: "eco" },
+            { value: "best_tradeoff" as Priority, label: "Best Trade-off", icon: "balance" },
+          ]).map((opt) => {
+            const active = priority === opt.value;
+            return (
+              <motion.button
+                key={opt.value}
+                type="button"
+                onClick={() => setPriority(opt.value)}
+                whileTap={{ scale: 0.92 }}
+                whileHover={{ scale: 1.05 }}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded text-[11px] font-semibold border transition-colors duration-200 ${
+                  active
+                    ? "bg-tertiary text-on-tertiary border-tertiary"
+                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-tertiary"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">{opt.icon}</span>
+                {opt.label}
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div>
 
       <motion.button
         type="submit"

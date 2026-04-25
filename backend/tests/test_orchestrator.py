@@ -80,9 +80,11 @@ class TestOrchestrator:
         assert result.fastest is not None
 
     @pytest.mark.asyncio
-    async def test_has_cheapest(self, mock_routes):
+    async def test_has_scoring_fields(self, mock_routes):
         result = await plan_route("A", "B")
-        assert result.cheapest is not None
+        assert result.selected_priority is not None
+        assert result.recommended_route is not None
+        assert len(result.scored_routes) > 0
 
     @pytest.mark.asyncio
     async def test_has_reasoning(self, mock_routes):

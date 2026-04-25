@@ -4,6 +4,7 @@ Pydantic models for request validation and response serialization.
 
 from pydantic import BaseModel, Field
 from core.emission_factors import TransitMode
+from core.scoring_engine import Priority
 
 
 # ---------------------------------------------------------------------------
@@ -20,6 +21,10 @@ class RouteRequest(BaseModel):
     constraint: str | None = Field(
         default=None,
         description="User constraint for the decision agent (e.g., 'Arrive by 10 AM', 'Budget under $5').",
+    )
+    priority: Priority = Field(
+        default=Priority.BEST_TRADEOFF,
+        description="Recommendation priority: fastest, greenest, or best_tradeoff.",
     )
 
 
@@ -48,6 +53,7 @@ class RouteOption(BaseModel):
     total_cost_usd: float
     emission_factor_source: str
     cost_source: str
+    polyline: str | None = None
 
 
 class AgentReasoning(BaseModel):
@@ -61,6 +67,35 @@ class AgentReasoning(BaseModel):
     )
 
 
+class ScoredRoute(BaseModel):
+    """A RouteOption enriched with scoring metadata."""
+    mode: TransitMode
+    segments: list[RouteSegment]
+    total_distance_km: float
+    total_duration_min: float
+    total_emissions_g: float
+    total_emissions_kg: float
+    total_cost_usd: float
+    emission_factor_source: str
+    cost_source: str
+    polyline: str | None = None
+    # Scoring fields
+    practicality_penalty: float = 0.0
+    normalized_duration: float = 0.0
+    normalized_emissions: float = 0.0
+    normalized_cost: float = 0.0
+    final_score: float = 0.0
+    is_dominated: bool = False
+    explanation_reason: str = ""
+
+
+class ScoringResult(BaseModel):
+    """Output of the scoring engine."""
+    priority: Priority
+    recommended: ScoredRoute
+    routes: list[ScoredRoute]
+
+
 class RouteComparison(BaseModel):
     """Full comparison across all evaluated modes."""
     origin: str
@@ -68,9 +103,12 @@ class RouteComparison(BaseModel):
     options: list[RouteOption]
     greenest: RouteOption | None = None
     fastest: RouteOption | None = None
-    cheapest: RouteOption | None = None
     savings_vs_driving_kg: float | None = None
     reasoning: AgentReasoning | None = None
+    # New scoring fields
+    selected_priority: Priority | None = None
+    recommended_route: ScoredRoute | None = None
+    scored_routes: list[ScoredRoute] = []
 
 
 # ---------------------------------------------------------------------------

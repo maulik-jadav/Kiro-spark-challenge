@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import TripForm from "@/components/TripForm";
 import ResultsPanel from "@/components/ResultsPanel";
 import ReasoningPanel from "@/components/ReasoningPanel";
 import MapView from "@/components/MapView";
 import EarthGlobe from "@/components/EarthGlobe";
 import { planRoute } from "@/lib/api";
-import type { RouteComparison, TransitMode } from "@/types/api";
+import type { RouteComparison, TransitMode, Priority } from "@/types/api";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -21,13 +21,14 @@ export default function Home() {
     origin: string,
     destination: string,
     modes: TransitMode[] | null,
-    constraint: string | null
+    constraint: string | null,
+    priority: Priority
   ) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const data = await planRoute(origin, destination, modes, constraint);
+      const data = await planRoute(origin, destination, modes, constraint, priority);
       setResult(data);
       setMapOrigin(origin);
       setMapDest(destination);
@@ -146,7 +147,7 @@ export default function Home() {
           transition={{ duration: 0.7, delay: 0.3 }}
           className="flex-1 bg-surface-dim relative min-h-[300px] lg:min-h-screen"
         >
-          <MapView origin={mapOrigin} destination={mapDest} />
+          <MapView origin={mapOrigin} destination={mapDest} routeComparison={result} />
         </motion.section>
       </main>
 

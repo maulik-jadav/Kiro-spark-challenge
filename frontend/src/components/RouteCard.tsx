@@ -2,24 +2,33 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MODE_LABELS, RouteOption } from "@/types/api";
+import { MODE_LABELS, RouteOption, ScoredRoute } from "@/types/api";
 
 interface RouteCardProps {
   option: RouteOption;
   isGreenest: boolean;
   isFastest: boolean;
-  isCheapest: boolean;
+  isRecommended: boolean;
+  scoredRoute?: ScoredRoute;
   index?: number;
 }
 
 const BADGE_CONFIG = {
+  recommended: {
+    label: "RECOMMENDED",
+    icon: "star",
+    bg: "bg-indigo-500",
+    text: "text-white",
+    border: "border-l-indigo-500",
+    ring: "shadow-[0_0_0_2px_rgba(99,102,241,0.15)]",
+  },
   fastest: {
     label: "FASTEST",
     icon: "bolt",
-    bg: "bg-route-fastest",
-    text: "text-on-primary",
-    border: "border-l-route-fastest",
-    ring: "shadow-[0_0_0_2px_rgba(0,53,46,0.1)]",
+    bg: "bg-amber-400",
+    text: "text-amber-900",
+    border: "border-l-amber-400",
+    ring: "shadow-[0_0_0_2px_rgba(234,179,8,0.15)]",
   },
   greenest: {
     label: "GREENEST",
@@ -29,26 +38,22 @@ const BADGE_CONFIG = {
     border: "border-l-route-greenest",
     ring: "",
   },
-  cheapest: {
-    label: "CHEAPEST",
-    icon: "attach_money",
-    bg: "bg-route-cheapest",
-    text: "text-on-tertiary",
-    border: "border-l-route-cheapest",
-    ring: "",
-  },
 };
 
-export default function RouteCard({ option, isGreenest, isFastest, isCheapest, index = 0 }: RouteCardProps) {
+export default function RouteCard({ option, isGreenest, isFastest, isRecommended, scoredRoute, index = 0 }: RouteCardProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const badge = isFastest
-    ? BADGE_CONFIG.fastest
-    : isGreenest
-    ? BADGE_CONFIG.greenest
-    : isCheapest
-    ? BADGE_CONFIG.cheapest
-    : null;
+  // Collect all applicable badges
+  const badges: typeof BADGE_CONFIG[keyof typeof BADGE_CONFIG][] = [];
+  if (isRecommended) badges.push(BADGE_CONFIG.recommended);
+  if (isFastest) badges.push(BADGE_CONFIG.fastest);
+  if (isGreenest) badges.push(BADGE_CONFIG.greenest);
+
+  // Use the first badge for the border color
+  const primaryBadge = badges[0] ?? null;
+
+  // Practicality note
+  const hasPracticalityPenalty = scoredRoute && scoredRoute.practicality_penalty > 0;
 
   return (
     <motion.div
@@ -57,20 +62,27 @@ export default function RouteCard({ option, isGreenest, isFastest, isCheapest, i
       transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
       whileHover={{ scale: 1.01, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
       className={`border border-outline-variant bg-surface-container-lowest rounded border-l-[3px] relative cursor-pointer transition-shadow ${
-        badge ? `${badge.border} ${badge.ring}` : "border-l-outline-variant"
+        primaryBadge ? `${primaryBadge.border} ${primaryBadge.ring}` : "border-l-outline-variant"
       }`}
     >
       <div className="p-md">
-        {/* Badge */}
-        {badge && (
+        {/* Badges — show all applicable categories */}
+        {badges.length > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.1 + 0.2, duration: 0.3 }}
-            className={`absolute top-md right-md ${badge.bg} ${badge.text} font-semibold text-[11px] uppercase tracking-widest px-sm py-xs rounded flex items-center gap-1`}
+            className="absolute top-md right-md flex items-center gap-1"
           >
-            <span className="material-symbols-outlined text-[14px]">{badge.icon}</span>
-            {badge.label}
+            {badges.map((b) => (
+              <span
+                key={b.label}
+                className={`${b.bg} ${b.text} font-semibold text-[11px] uppercase tracking-widest px-sm py-xs rounded flex items-center gap-1`}
+              >
+                <span className="material-symbols-outlined text-[14px]">{b.icon}</span>
+                {b.label}
+              </span>
+            ))}
           </motion.div>
         )}
 
@@ -98,6 +110,19 @@ export default function RouteCard({ option, isGreenest, isFastest, isCheapest, i
             </span>
           </div>
         </div>
+
+        {/* Practicality note */}
+        {hasPracticalityPenalty && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 + 0.3, duration: 0.25 }}
+            className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-1.5"
+          >
+            <span className="material-symbols-outlined text-[14px]">warning</span>
+            Long {option.mode === "walking" ? "walk" : "ride"} — penalized for distance
+          </motion.div>
+        )}
 
         {/* Expand toggle */}
         {option.segments.length > 0 && (

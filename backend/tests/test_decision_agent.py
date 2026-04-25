@@ -60,10 +60,10 @@ class TestFallbackReasoning:
         result = _fallback_reasoning(options)
         assert len(result.justification) > 10
 
-    def test_mentions_weighted_score(self):
+    def test_mentions_priority(self):
         options = _make_options()
         result = _fallback_reasoning(options)
-        assert "weighted" in result.justification.lower()
+        assert "priority" in result.justification.lower()
 
     def test_considers_time_not_just_emissions(self):
         """Fallback should balance time and emissions, not always pick greenest."""
@@ -117,7 +117,7 @@ class TestDecideNoKey:
         options = _make_options()
         result = await decide("SF", "Oakland", options, api_key="")
         assert isinstance(result, AgentReasoning)
-        assert "weighted" in result.justification.lower()
+        assert "priority" in result.justification.lower()
 
     @pytest.mark.asyncio
     async def test_empty_options_with_no_key(self):

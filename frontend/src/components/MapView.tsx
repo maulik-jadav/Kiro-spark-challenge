@@ -1,54 +1,135 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { useEffect, useState, useMemo } from "react";
+import { APIProvider, Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
+import type { RouteComparison } from "@/types/api";
 
 interface MapViewProps {
   origin: string | null;
   destination: string | null;
+  routeComparison?: RouteComparison | null;
 }
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 const DEFAULT_CENTER = { lat: 37.0902, lng: -95.7129 };
 const DEFAULT_ZOOM = 4;
 
-const MAP_STYLES: google.maps.MapTypeStyle[] = [
-  { elementType: "geometry", stylers: [{ color: "#ebe3cd" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#523735" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#f5f1e6" }] },
-  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#c9b2a6" }] },
-  { featureType: "administrative.land_parcel", elementType: "geometry.stroke", stylers: [{ color: "#dcd2be" }] },
-  { featureType: "administrative.land_parcel", elementType: "labels", stylers: [{ visibility: "off" }] },
-  { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#ae9e90" }] },
-  { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#dfd2ae" }] },
-  { featureType: "landscape.natural", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#dfd2ae" }] },
-  { featureType: "poi", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { featureType: "poi", elementType: "labels.text", stylers: [{ visibility: "off" }] },
-  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#93817c" }] },
-  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
-  { featureType: "poi.medical", elementType: "geometry", stylers: [{ visibility: "off" }] },
-  { featureType: "poi.park", elementType: "geometry.fill", stylers: [{ color: "#a5b076" }] },
-  { featureType: "poi.park", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { featureType: "poi.park", elementType: "labels.text", stylers: [{ visibility: "off" }] },
-  { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#447530" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#f5f1e6" }] },
-  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#fdfcf8" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#f8c967" }] },
-  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#e9bc62" }] },
-  { featureType: "road.highway.controlled_access", elementType: "geometry", stylers: [{ color: "#e98d58" }] },
-  { featureType: "road.highway.controlled_access", elementType: "geometry.stroke", stylers: [{ color: "#db8555" }] },
-  { featureType: "road.local", elementType: "labels", stylers: [{ visibility: "off" }] },
-  { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#806b63" }] },
-  { featureType: "transit.line", elementType: "geometry", stylers: [{ color: "#dfd2ae" }] },
-  { featureType: "transit.line", elementType: "labels.text.fill", stylers: [{ color: "#8f7d77" }] },
-  { featureType: "transit.line", elementType: "labels.text.stroke", stylers: [{ color: "#ebe3cd" }] },
-  { featureType: "transit.station", elementType: "geometry", stylers: [{ color: "#dfd2ae" }] },
-  { featureType: "water", elementType: "geometry.fill", stylers: [{ color: "#b9d3c2" }] },
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#92998d" }] },
-];
+/**
+ * Decode a Google Encoded Polyline string into an array of {lat, lng} coordinates.
+ * Implements the Encoded Polyline Algorithm:
+ * https://developers.google.com/maps/documentation/utilities/polylinealgorithm
+ */
+export function decodePolyline(encoded: string): { lat: number; lng: number }[] {
+  const points: { lat: number; lng: number }[] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
 
-export default function MapView({ origin, destination }: MapViewProps) {
+  while (index < encoded.length) {
+    // Decode latitude
+    let result = 0;
+    let shift = 0;
+    let byte: number;
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+    lat += result & 1 ? ~(result >> 1) : result >> 1;
+
+    // Decode longitude
+    result = 0;
+    shift = 0;
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+    lng += result & 1 ? ~(result >> 1) : result >> 1;
+
+    points.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+
+  return points;
+}
+
+/**
+ * Side-effect component that renders a Google Maps Polyline on the map.
+ * Uses the useMap() hook to get the map instance and creates/cleans up
+ * a google.maps.Polyline imperatively.
+ */
+function CategoryPolyline({
+  encodedPolyline,
+  color,
+  strokeWeight,
+  opacity,
+}: {
+  encodedPolyline: string;
+  color: string;
+  strokeWeight: number;
+  opacity: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !encodedPolyline) return;
+
+    const path = decodePolyline(encodedPolyline);
+    const polyline = new google.maps.Polyline({
+      path,
+      strokeColor: color,
+      strokeWeight,
+      strokeOpacity: opacity,
+      map,
+    });
+
+    return () => {
+      polyline.setMap(null);
+    };
+  }, [map, encodedPolyline, color, strokeWeight, opacity]);
+
+  return null;
+}
+
+/**
+ * Side-effect component that fits the map bounds to show all polyline paths.
+ */
+function PolylineBoundsFitter({
+  routeComparison,
+}: {
+  routeComparison: RouteComparison;
+}) {
+  const map = useMap();
+
+  const allPoints = useMemo(() => {
+    const points: { lat: number; lng: number }[] = [];
+    const categories = [
+      routeComparison.greenest,
+      routeComparison.recommended_route,
+      routeComparison.fastest,
+    ];
+    for (const route of categories) {
+      if (route?.polyline) {
+        points.push(...decodePolyline(route.polyline));
+      }
+    }
+    return points;
+  }, [routeComparison]);
+
+  useEffect(() => {
+    if (!map || allPoints.length === 0) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    for (const point of allPoints) {
+      bounds.extend(point);
+    }
+    map.fitBounds(bounds);
+  }, [map, allPoints]);
+
+  return null;
+}
+
+export default function MapView({ origin, destination, routeComparison }: MapViewProps) {
   if (!API_KEY) {
     return (
       <div className="w-full h-full min-h-[300px] bg-surface-dim flex items-center justify-center">
@@ -75,12 +156,51 @@ export default function MapView({ origin, destination }: MapViewProps) {
           style={{ width: "100%", height: "100%", minHeight: "300px" }}
           defaultCenter={DEFAULT_CENTER}
           defaultZoom={DEFAULT_ZOOM}
-          styles={MAP_STYLES}
+          mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "DEMO_MAP_ID"}
           gestureHandling="cooperative"
           disableDefaultUI={false}
         >
           {origin && <GeocodedMarker address={origin} color="#00352e" label="A" />}
           {destination && <GeocodedMarker address={destination} color="#ba1a1a" label="B" />}
+
+          {/* Render category polylines — only one color per unique route */}
+          {(() => {
+            if (!routeComparison) return null;
+            // Deduplicate: if multiple categories share the same polyline, render once
+            // Priority order for color: greenest > fastest > recommended
+            const rendered = new Set<string>();
+            const polylines: { encoded: string; color: string }[] = [];
+
+            const greenestPoly = routeComparison.greenest?.polyline;
+            const fastestPoly = routeComparison.fastest?.polyline;
+            const recommendedPoly = routeComparison.recommended_route?.polyline;
+
+            if (greenestPoly && !rendered.has(greenestPoly)) {
+              polylines.push({ encoded: greenestPoly, color: "#16a34a" }); // green
+              rendered.add(greenestPoly);
+            }
+            if (fastestPoly && !rendered.has(fastestPoly)) {
+              polylines.push({ encoded: fastestPoly, color: "#f59e0b" }); // amber
+              rendered.add(fastestPoly);
+            }
+            if (recommendedPoly && !rendered.has(recommendedPoly)) {
+              polylines.push({ encoded: recommendedPoly, color: "#6366f1" }); // indigo
+              rendered.add(recommendedPoly);
+            }
+
+            return polylines.map((p, i) => (
+              <CategoryPolyline
+                key={`polyline-${i}`}
+                encodedPolyline={p.encoded}
+                color={p.color}
+                strokeWeight={4}
+                opacity={0.8}
+              />
+            ));
+          })()}
+
+          {/* Auto-fit map bounds to show all polylines */}
+          {routeComparison && <PolylineBoundsFitter routeComparison={routeComparison} />}
         </Map>
       </APIProvider>
 

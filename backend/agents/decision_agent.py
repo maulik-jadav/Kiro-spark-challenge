@@ -19,10 +19,10 @@ You are a carbon-aware transit advisor. You receive structured route data \
 comparing transit modes between two locations. Each option includes distance, \
 duration, CO2 emissions, and cost.
 
-Your job:
-1. Analyze the trade-offs between speed, cost, and carbon impact.
-2. Recommend the best option, weighted toward sustainability but \
-   respecting practical constraints the user provides.
+A deterministic scoring engine has already selected the recommended route. \
+Your job is to explain and justify that selection:
+1. Explain why the pre-selected route is a good choice given the data.
+2. Analyze the trade-offs between speed, cost, and carbon impact.
 3. Explain your reasoning in plain, concise language — no jargon.
 
 Always ground your reasoning in the actual numbers provided. \
@@ -30,7 +30,7 @@ Never fabricate data or reference modes not in the options.
 
 Respond with JSON only, no markdown fences:
 {
-  "recommended_mode": "<mode value>",
+  "recommended_mode": "<the pre-selected mode value>",
   "summary": "<1-2 sentence recommendation>",
   "justification": "<detailed reasoning comparing the trade-offs>",
   "constraint_analysis": "<how the recommendation satisfies the constraint, or null if no constraint>"
@@ -43,6 +43,7 @@ def _build_user_prompt(
     destination: str,
     options: list[RouteOption],
     constraint: str | None,
+    recommended_mode: TransitMode | None = None,
 ) -> str:
     """Build the user message with route data for the LLM."""
     rows = []
@@ -58,6 +59,9 @@ def _build_user_prompt(
 
     prompt = f"Route: {origin} → {destination}\n\nOptions:\n{json.dumps(rows, indent=2)}"
 
+    if recommended_mode:
+        prompt += f"\n\nPre-selected recommended mode: {recommended_mode.value}"
+
     if constraint:
         prompt += f"\n\nUser constraint: {constraint}"
 
@@ -69,16 +73,20 @@ async def decide(
     destination: str,
     options: list[RouteOption],
     constraint: str | None = None,
+    recommended_mode: TransitMode | None = None,
     api_key: str = "",
 ) -> AgentReasoning:
     """
     Send route options to Llama via Groq and get a reasoned recommendation.
 
-    Falls back to a deterministic pick (greenest) if the API key is
-    missing or the call fails, so the endpoint always returns data.
+    The recommended_mode is pre-selected by the scoring engine. The LLM
+    explains and justifies that selection rather than picking its own.
+
+    Falls back to a deterministic pick if the API key is missing or the
+    call fails, so the endpoint always returns data.
     """
     if not api_key or not options:
-        return _fallback_reasoning(options)
+        return _fallback_reasoning(options, recommended_mode=recommended_mode)
 
     try:
         client = AsyncOpenAI(
@@ -94,7 +102,10 @@ async def decide(
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {
                     "role": "user",
-                    "content": _build_user_prompt(origin, destination, options, constraint),
+                    "content": _build_user_prompt(
+                        origin, destination, options, constraint,
+                        recommended_mode=recommended_mode,
+                    ),
                 },
             ],
         )
@@ -111,7 +122,7 @@ async def decide(
 
     except Exception as e:
         print(f"[WARN] Decision agent failed: {e}. Using fallback.")
-        return _fallback_reasoning(options)
+        return _fallback_reasoning(options, recommended_mode=recommended_mode)
 
 
 def _score_option(opt: RouteOption, options: list[RouteOption]) -> float:
@@ -138,11 +149,14 @@ def _score_option(opt: RouteOption, options: list[RouteOption]) -> float:
     return 0.40 * emission_score + 0.35 * time_score + 0.25 * cost_score
 
 
-def _fallback_reasoning(options: list[RouteOption]) -> AgentReasoning:
+def _fallback_reasoning(
+    options: list[RouteOption],
+    recommended_mode: TransitMode | None = None,
+) -> AgentReasoning:
     """
     Deterministic fallback when the LLM is unavailable.
-    Uses weighted scoring (40% emissions, 35% time, 25% cost)
-    instead of always picking the greenest.
+    Uses the pre-selected recommended_mode from the scoring engine when
+    available, otherwise falls back to weighted scoring.
     """
     if not options:
         return AgentReasoning(
@@ -151,18 +165,22 @@ def _fallback_reasoning(options: list[RouteOption]) -> AgentReasoning:
             justification="No options were returned by the routing engine.",
         )
 
-    # Score and rank all options
-    scored = [(opt, _score_option(opt, options)) for opt in options]
-    scored.sort(key=lambda x: x[1], reverse=True)  # highest score first
-    best, best_score = scored[0]
+    # Use the scoring engine's recommendation if provided
+    if recommended_mode is not None:
+        best = next((o for o in options if o.mode == recommended_mode), None)
+        if best is None:
+            best = options[0]
+    else:
+        # Legacy fallback: score and rank all options
+        scored = [(opt, _score_option(opt, options)) for opt in options]
+        scored.sort(key=lambda x: x[1], reverse=True)  # highest score first
+        best = scored[0][0]
 
     greenest = min(options, key=lambda o: o.total_emissions_g)
     fastest = min(options, key=lambda o: o.total_duration_min)
-    cheapest = min(options, key=lambda o: o.total_cost_usd)
 
     parts = [
-        f"Recommended {best.mode.value} based on a weighted score "
-        f"(40% emissions, 35% time, 25% cost).",
+        f"Recommended {best.mode.value} based on the selected priority.",
     ]
 
     if best.mode != greenest.mode:

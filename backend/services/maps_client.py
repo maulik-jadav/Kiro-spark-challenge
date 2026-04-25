@@ -18,6 +18,7 @@ class RawRouteResult:
     distance_km: float
     duration_min: float
     segments: list[dict]  # [{mode, distance_km, duration_min, description}]
+    polyline: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -141,7 +142,7 @@ async def live_route(
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": "routes.distanceMeters,routes.staticDuration",
+        "X-Goog-FieldMask": "routes.distanceMeters,routes.staticDuration,routes.polyline.encodedPolyline",
     }
 
     async with httpx.AsyncClient(timeout=15) as client:
@@ -152,6 +153,7 @@ async def live_route(
     route = data["routes"][0]
     total_km = route["distanceMeters"] / 1000.0
     total_min = _parse_duration(route["staticDuration"])
+    encoded_polyline = route.get("polyline", {}).get("encodedPolyline")
 
     # Use _build_transit_segments for all modes:
     # - Non-transit (driving, cycling, etc.) → single clean segment, no micro-steps
@@ -163,6 +165,7 @@ async def live_route(
         distance_km=round(total_km, 2),
         duration_min=round(total_min, 1),
         segments=segments,
+        polyline=encoded_polyline,
     )
 
 

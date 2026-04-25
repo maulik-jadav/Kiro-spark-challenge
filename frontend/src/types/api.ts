@@ -58,6 +58,19 @@ export interface RouteOption {
   total_cost_usd: number;
   emission_factor_source: string;
   cost_source: string;
+  polyline?: string | null;
+}
+
+export type Priority = "fastest" | "greenest" | "best_tradeoff";
+
+export interface ScoredRoute extends RouteOption {
+  practicality_penalty: number;
+  normalized_duration: number;
+  normalized_emissions: number;
+  normalized_cost: number;
+  final_score: number;
+  is_dominated: boolean;
+  explanation_reason: string;
 }
 
 export interface AgentReasoning {
@@ -73,9 +86,11 @@ export interface RouteComparison {
   options: RouteOption[];
   greenest: RouteOption | null;
   fastest: RouteOption | null;
-  cheapest: RouteOption | null;
   savings_vs_driving_kg: number | null;
   reasoning: AgentReasoning | null;
+  selected_priority: Priority | null;
+  recommended_route: ScoredRoute | null;
+  scored_routes: ScoredRoute[];
 }
 
 export interface CalendarEvent {
