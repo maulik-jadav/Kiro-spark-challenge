@@ -71,7 +71,7 @@ export default function Home() {
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="w-full lg:w-sidebar_width bg-surface-container-lowest border-r border-outline-variant flex flex-col z-20 overflow-y-auto lg:h-screen lg:sticky lg:top-0"
+          className="w-full lg:w-[420px] bg-surface-container-lowest border-r border-outline-variant flex flex-col z-20 overflow-y-auto lg:h-screen lg:sticky lg:top-0"
         >
           <div className="p-md border-b border-outline-variant">
             <TripForm onSubmit={handleSubmit} loading={loading} />
