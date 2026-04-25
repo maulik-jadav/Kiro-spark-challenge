@@ -66,31 +66,24 @@ export default function RouteCard({ option, isGreenest, isFastest, isRecommended
       }`}
     >
       <div className="p-md">
-        {/* Badges — show all applicable categories */}
-        {badges.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.1 + 0.2, duration: 0.3 }}
-            className="absolute top-md right-md flex items-center gap-1"
-          >
-            {badges.map((b) => (
-              <span
-                key={b.label}
-                className={`${b.bg} ${b.text} font-semibold text-[11px] uppercase tracking-widest px-sm py-xs rounded flex items-center gap-1`}
-              >
-                <span className="material-symbols-outlined text-[14px]">{b.icon}</span>
-                {b.label}
-              </span>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Mode + duration */}
-        <div className="flex flex-col gap-sm pr-24">
-          <span className="font-headline font-semibold text-xl text-on-background">
-            {Math.round(option.total_duration_min)} min
-          </span>
+        {/* Mode + duration header with badges right-aligned */}
+        <div className="flex flex-col gap-sm">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-headline font-semibold text-xl text-on-background">
+              {Math.round(option.total_duration_min)} min
+            </span>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {badges.map((b) => (
+                <span
+                  key={b.label}
+                  className={`${b.bg} ${b.text} font-semibold text-[11px] uppercase tracking-widest px-sm py-xs rounded flex items-center gap-1`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">{b.icon}</span>
+                  {b.label}
+                </span>
+              ))}
+            </div>
+          </div>
           <div className="flex justify-between items-center border-b border-outline-variant pb-sm">
             <span className="text-sm font-medium text-on-surface-variant">{MODE_LABELS[option.mode]}</span>
             <span className="text-sm font-medium text-on-surface-variant tabular-nums">

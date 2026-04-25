@@ -221,7 +221,7 @@ function AnalyticsContent() {
                       <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} unit=" kg" />
                       <Tooltip
                         contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
-                        formatter={(v: number) => [`${v} kg CO₂`]}
+                        formatter={(v) => [`${v ?? 0} kg CO₂`]}
                       />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                       <Line type="monotone" dataKey="actual" name="Actual"      stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} />
@@ -250,7 +250,7 @@ function AnalyticsContent() {
                         </Pie>
                         <Tooltip
                           contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                          formatter={(v: number) => [`${v} kg CO₂`]}
+                          formatter={(v) => [`${v ?? 0} kg CO₂`]}
                         />
                       </PieChart>
                     </ResponsiveContainer>
