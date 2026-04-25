@@ -144,5 +144,4 @@ class AuthCallbackResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = "ok"
-    routing_mode: str
     version: str = "0.1.0"

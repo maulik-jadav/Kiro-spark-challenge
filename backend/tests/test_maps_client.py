@@ -1,57 +1,20 @@
 """
 Tests for services/maps_client.py
-Verifies mock routing, segment building, and haversine estimates.
+Verifies segment building and live route fetching (mock removed).
 """
 
 import pytest
+import httpx
+from unittest.mock import AsyncMock, patch, MagicMock
 from core.emission_factors import TransitMode
 from services.maps_client import (
-    mock_route,
-    _haversine_estimate,
     _build_transit_segments,
-    _deterministic_seed,
     fetch_route,
     fetch_all_routes,
     RawRouteResult,
+    _parse_latlng,
+    _parse_duration,
 )
-
-
-# ---------------------------------------------------------------------------
-# Haversine and deterministic seed
-# ---------------------------------------------------------------------------
-
-class TestHaversine:
-    def test_latlng_input(self):
-        dist = _haversine_estimate("37.7749,-122.4194", "37.8044,-122.2712")
-        assert 10 < dist < 20  # SF to Oakland is ~13 km
-
-    def test_address_input_returns_reasonable_range(self):
-        dist = _haversine_estimate("San Francisco", "Oakland")
-        assert 5.0 <= dist <= 40.0
-
-    def test_deterministic_for_same_inputs(self):
-        d1 = _haversine_estimate("A", "B")
-        d2 = _haversine_estimate("A", "B")
-        assert d1 == d2
-
-    def test_different_inputs_can_differ(self):
-        d1 = _haversine_estimate("A", "B")
-        d2 = _haversine_estimate("C", "D")
-        # Not guaranteed to differ but extremely likely with hash
-        # Just check they're both valid
-        assert d1 > 0 and d2 > 0
-
-
-class TestDeterministicSeed:
-    def test_same_inputs_same_seed(self):
-        s1 = _deterministic_seed("A", "B")
-        s2 = _deterministic_seed("A", "B")
-        assert s1 == s2
-
-    def test_different_inputs_different_seed(self):
-        s1 = _deterministic_seed("A", "B")
-        s2 = _deterministic_seed("B", "A")
-        assert s1 != s2
 
 
 # ---------------------------------------------------------------------------
@@ -110,52 +73,81 @@ class TestBuildTransitSegments:
 
 
 # ---------------------------------------------------------------------------
-# Mock routing
+# Parse helpers
 # ---------------------------------------------------------------------------
 
-class TestMockRoute:
-    def test_returns_raw_route_result(self):
-        result = mock_route("A", "B", TransitMode.DRIVING)
-        assert isinstance(result, RawRouteResult)
+class TestParseHelpers:
+    def test_parse_latlng_with_coords(self):
+        result = _parse_latlng("37.7749,-122.4194")
+        assert "location" in result
+        assert result["location"]["latLng"]["latitude"] == 37.7749
 
-    def test_mock_route_has_correct_mode(self):
-        result = mock_route("A", "B", TransitMode.BUS)
-        assert result.mode == TransitMode.BUS
+    def test_parse_latlng_with_address(self):
+        result = _parse_latlng("San Francisco, CA")
+        assert result == {"address": "San Francisco, CA"}
 
-    def test_mock_route_positive_values(self):
-        result = mock_route("SF", "Oakland", TransitMode.DRIVING)
-        assert result.distance_km > 0
-        assert result.duration_min > 0
-        assert len(result.segments) > 0
-
-    def test_mock_route_deterministic(self):
-        r1 = mock_route("X", "Y", TransitMode.DRIVING)
-        r2 = mock_route("X", "Y", TransitMode.DRIVING)
-        assert r1.distance_km == r2.distance_km
-        assert r1.duration_min == r2.duration_min
-
-    def test_transit_mock_has_walk_segments(self):
-        result = mock_route("A", "B", TransitMode.LIGHT_RAIL)
-        modes = [s["mode"] for s in result.segments]
-        assert "walking" in modes
-        assert "light_rail" in modes
+    def test_parse_duration(self):
+        assert _parse_duration("120s") == 2.0
+        assert _parse_duration("60s") == 1.0
+        assert _parse_duration("0s") == 0.0
 
 
 # ---------------------------------------------------------------------------
-# Fetch functions (mock mode)
+# Fetch functions (always live)
 # ---------------------------------------------------------------------------
 
 class TestFetchFunctions:
     @pytest.mark.asyncio
-    async def test_fetch_route_mock(self):
-        result = await fetch_route("A", "B", TransitMode.DRIVING, routing_mode="mock")
-        assert isinstance(result, RawRouteResult)
-        assert result.mode == TransitMode.DRIVING
+    async def test_fetch_route_calls_live_route(self):
+        """fetch_route should always call live_route."""
+        mock_result = RawRouteResult(
+            mode=TransitMode.DRIVING,
+            distance_km=15.0,
+            duration_min=20.0,
+            segments=[{"mode": "driving", "distance_km": 15.0, "duration_min": 20.0, "description": "driving for 15.0 km"}],
+        )
+        with patch("services.maps_client.live_route", new_callable=AsyncMock, return_value=mock_result) as mock_live:
+            result = await fetch_route("A", "B", TransitMode.DRIVING, api_key="test-key")
+            assert isinstance(result, RawRouteResult)
+            assert result.mode == TransitMode.DRIVING
+            mock_live.assert_called_once_with("A", "B", TransitMode.DRIVING, "test-key")
 
     @pytest.mark.asyncio
-    async def test_fetch_all_routes_mock(self):
+    async def test_fetch_route_raises_on_failure(self):
+        """fetch_route should raise on API failure, not fall back to mock."""
+        with patch("services.maps_client.live_route", new_callable=AsyncMock, side_effect=httpx.HTTPStatusError("error", request=MagicMock(), response=MagicMock())):
+            with pytest.raises(httpx.HTTPStatusError):
+                await fetch_route("A", "B", TransitMode.DRIVING, api_key="test-key")
+
+    @pytest.mark.asyncio
+    async def test_fetch_all_routes_calls_live_for_all_modes(self):
+        """fetch_all_routes should call live_route for each mode."""
         modes = [TransitMode.DRIVING, TransitMode.WALKING, TransitMode.BUS]
-        results = await fetch_all_routes("A", "B", modes, routing_mode="mock")
-        assert len(results) == 3
-        returned_modes = {r.mode for r in results}
-        assert returned_modes == set(modes)
+
+        async def fake_live(origin, dest, mode, api_key):
+            return RawRouteResult(
+                mode=mode,
+                distance_km=10.0,
+                duration_min=15.0,
+                segments=[{"mode": mode.value, "distance_km": 10.0, "duration_min": 15.0, "description": f"{mode.value} for 10.0 km"}],
+            )
+
+        with patch("services.maps_client.live_route", new_callable=AsyncMock, side_effect=fake_live):
+            results = await fetch_all_routes("A", "B", modes, api_key="test-key")
+            assert len(results) == 3
+            returned_modes = {r.mode for r in results}
+            assert returned_modes == set(modes)
+
+    @pytest.mark.asyncio
+    async def test_fetch_route_no_routing_mode_parameter(self):
+        """fetch_route should not accept a routing_mode parameter."""
+        import inspect
+        sig = inspect.signature(fetch_route)
+        assert "routing_mode" not in sig.parameters
+
+    @pytest.mark.asyncio
+    async def test_fetch_all_routes_no_routing_mode_parameter(self):
+        """fetch_all_routes should not accept a routing_mode parameter."""
+        import inspect
+        sig = inspect.signature(fetch_all_routes)
+        assert "routing_mode" not in sig.parameters

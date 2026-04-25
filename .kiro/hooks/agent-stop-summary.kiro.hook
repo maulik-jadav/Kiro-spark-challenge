@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Summarize Changes on Agent Stop",
+  "description": "When the agent finishes execution, provide a summary of what files changed, why they changed, and what commands to run next to test the project.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The agent just finished its work. Provide a concise summary with three sections:\n\n1. **Files Changed** — List every file that was created, modified, or deleted during this session.\n2. **Why They Changed** — For each file (or group of related files), explain the reason for the change in one sentence.\n3. **Next Steps to Test** — List the exact shell commands the user should run to verify the changes work correctly. Include both backend (pytest) and frontend (npm test / npm run build) commands as appropriate. If a dev server needs to be started, include that too.\n\nKeep it brief and actionable."
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { planDay, getAuthUrl, ApiError } from "@/lib/api";
+import PlaceAutocompleteInput from "@/components/PlaceAutocompleteInput";
 import type {
   DayPlanResponse,
   CalendarEvent,
@@ -198,13 +199,18 @@ export default function PlanDayPage() {
               >
                 Home Address
               </label>
-              <input
+              <PlaceAutocompleteInput
                 id="home-address"
-                type="text"
                 value={homeAddress}
-                onChange={(e) => setHomeAddress(e.target.value)}
+                onChange={setHomeAddress}
+                onPlaceSelect={(place) => {
+                  if (place) {
+                    setHomeAddress(place.formattedAddress);
+                  }
+                }}
                 placeholder="Enter your home address"
                 required
+                label="Home Address"
                 className="w-full px-3 py-2 rounded border border-outline-variant bg-surface-container-lowest text-on-background text-sm placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-tertiary focus:border-tertiary"
               />
               {fieldError("home_address") && (

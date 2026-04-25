@@ -24,7 +24,6 @@ async def get_routes(
     origin: str,
     destination: str,
     modes: list[TransitMode] | None = None,
-    routing_mode: str = "mock",
     api_key: str = "",
 ) -> list[RawRouteResult]:
     """
@@ -34,8 +33,7 @@ async def get_routes(
         origin: Starting point (address or "lat,lng").
         destination: End point (address or "lat,lng").
         modes: Transit modes to evaluate. Defaults to DEFAULT_MODES.
-        routing_mode: "mock" or "live".
-        api_key: Google Maps API key (required for live mode).
+        api_key: Google Maps API key (required for live routing).
 
     Returns:
         List of RawRouteResult, one per mode.
@@ -43,9 +41,9 @@ async def get_routes(
     if modes is None:
         modes = DEFAULT_MODES
 
-    # Filter out walking/bicycling for long distances in mock mode
+    # Filter out walking/bicycling for long distances
     # (realistic — you wouldn't walk 40 km)
-    results = await fetch_all_routes(origin, destination, modes, routing_mode, api_key)
+    results = await fetch_all_routes(origin, destination, modes, api_key)
 
     MAX_WALK_KM = 8.0
     MAX_BIKE_KM = 25.0

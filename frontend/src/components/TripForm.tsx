@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ALL_MODES, MODE_LABELS, TransitMode } from "@/types/api";
 import ConstraintInput from "./ConstraintInput";
+import PlaceAutocompleteInput from "./PlaceAutocompleteInput";
 
 interface TripFormProps {
   onSubmit: (origin: string, destination: string, modes: TransitMode[] | null, constraint: string | null) => void;
@@ -64,13 +65,14 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
           </div>
           <div className="flex-1 relative">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px] sm:hidden">trip_origin</span>
-            <input
+            <PlaceAutocompleteInput
               id="origin"
-              type="text"
               value={origin}
-              onChange={(e) => setOrigin(e.target.value)}
+              onChange={setOrigin}
+              onPlaceSelect={() => {}}
               placeholder="Enter origin"
               className={inputClass}
+              label="Origin"
             />
           </div>
         </motion.div>
@@ -96,13 +98,14 @@ export default function TripForm({ onSubmit, loading }: TripFormProps) {
           </div>
           <div className="flex-1 relative">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-tertiary text-[18px] sm:hidden">location_on</span>
-            <input
+            <PlaceAutocompleteInput
               id="destination"
-              type="text"
               value={destination}
-              onChange={(e) => setDestination(e.target.value)}
+              onChange={setDestination}
+              onPlaceSelect={() => {}}
               placeholder="Enter destination"
               className={inputClass}
+              label="Destination"
             />
           </div>
         </motion.div>

@@ -38,7 +38,6 @@ async def plan_route(
     destination: str,
     modes=None,
     constraint: str | None = None,
-    routing_mode: str = "mock",
     google_maps_api_key: str = "",
     groq_api_key: str = "",
 ) -> RouteComparison:
@@ -52,7 +51,6 @@ async def plan_route(
         origin=origin,
         destination=destination,
         modes=modes,
-        routing_mode=routing_mode,
         api_key=google_maps_api_key,
     )
 
@@ -173,7 +171,6 @@ async def plan_day(
     target_date: date,
     session_id: str | None = None,
     home_address: str = "",
-    routing_mode: str = "mock",
     google_maps_api_key: str = "",
     google_client_id: str = "",
     google_client_secret: str = "",
@@ -229,7 +226,6 @@ async def plan_day(
             origin=w["origin"],
             destination=w["destination"],
             constraint=constraint,
-            routing_mode=routing_mode,
             google_maps_api_key=google_maps_api_key,
             groq_api_key=groq_api_key,
         )

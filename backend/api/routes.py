@@ -34,7 +34,7 @@ router = APIRouter()
 
 @router.get("/health", response_model=HealthResponse)
 async def health(settings: Settings = Depends(get_settings)):
-    return HealthResponse(routing_mode=settings.routing_mode)
+    return HealthResponse()
 
 
 # ---------------------------------------------------------------------------
@@ -57,7 +57,6 @@ async def plan_route(
         destination=req.destination,
         modes=req.modes,
         constraint=req.constraint,
-        routing_mode=settings.routing_mode,
         google_maps_api_key=settings.google_maps_api_key,
         groq_api_key=settings.groq_api_key,
     )
@@ -142,7 +141,6 @@ async def plan_day(
         target_date=target_date,
         session_id=req.session_id,
         home_address=req.home_address,
-        routing_mode=settings.routing_mode,
         google_maps_api_key=settings.google_maps_api_key,
         google_client_id=settings.google_client_id,
         google_client_secret=settings.google_client_secret,

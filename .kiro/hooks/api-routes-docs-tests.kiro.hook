@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Update API Docs & Tests on Route Change",
+  "description": "When backend/api/routes.py is saved, update the API documentation in README.md and update or create matching test files in backend/tests/ to cover all endpoints.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "backend/api/routes.py"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The API routes file (backend/api/routes.py) was just saved. Do two things:\n\n1. **Update documentation**: Read the current routes and update the API section of README.md (or create one if missing) to reflect all current endpoints, their methods, request/response schemas, and descriptions.\n\n2. **Update or create tests**: Read backend/tests/test_api.py (if it exists) and update it to cover all current endpoints. If the file doesn't exist, create it. Use pytest and FastAPI's TestClient. Match the existing test patterns in backend/tests/.\n\nDo not modify routes.py itself."
+  }
+}

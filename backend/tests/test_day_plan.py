@@ -6,9 +6,148 @@ Tests the orchestrator's plan_day function and the transit window logic.
 import pytest
 import pytest_asyncio
 from datetime import date
+from unittest.mock import AsyncMock, patch
+
 from agents.orchestrator import plan_day, _build_transit_windows, _parse_dt
 from models.schemas import DayPlanResponse, TransitWindow, TransitRecommendation
 from services.calendar_client import mock_events
+from services.maps_client import RawRouteResult
+from core.emission_factors import TransitMode
+
+
+def _mock_raw_routes():
+    """Return a set of fake RawRouteResults for testing the pipeline."""
+    return [
+        RawRouteResult(
+            mode=TransitMode.DRIVING,
+            distance_km=15.0,
+            duration_min=20.0,
+            segments=[{
+                "mode": "driving",
+                "distance_km": 15.0,
+                "duration_min": 20.0,
+                "description": "driving for 15.0 km",
+            }],
+        ),
+        RawRouteResult(
+            mode=TransitMode.BUS,
+            distance_km=16.0,
+            duration_min=35.0,
+            segments=[
+                {"mode": "walking", "distance_km": 0.4, "duration_min": 4.8, "description": "Walk to station"},
+                {"mode": "bus", "distance_km": 15.2, "duration_min": 25.2, "description": "bus (15.2 km)"},
+                {"mode": "walking", "distance_km": 0.3, "duration_min": 3.6, "description": "Walk to destination"},
+            ],
+        ),
+        RawRouteResult(
+            mode=TransitMode.BICYCLING,
+            distance_km=14.0,
+            duration_min=45.0,
+            segments=[{
+                "mode": "bicycling",
+                "distance_km": 14.0,
+                "duration_min": 45.0,
+                "description": "bicycling for 14.0 km",
+            }],
+        ),
+        RawRouteResult(
+            mode=TransitMode.WALKING,
+            distance_km=1.0,
+            duration_min=12.0,
+            segments=[{
+                "mode": "walking",
+                "distance_km": 1.0,
+                "duration_min": 12.0,
+                "description": "walking for 1.0 km",
+            }],
+        ),
+        RawRouteResult(
+            mode=TransitMode.LIGHT_RAIL,
+            distance_km=16.5,
+            duration_min=30.0,
+            segments=[
+                {"mode": "walking", "distance_km": 0.4, "duration_min": 4.8, "description": "Walk to station"},
+                {"mode": "light_rail", "distance_km": 15.7, "duration_min": 20.2, "description": "light_rail (15.7 km)"},
+                {"mode": "walking", "distance_km": 0.3, "duration_min": 3.6, "description": "Walk to destination"},
+            ],
+        ),
+        RawRouteResult(
+            mode=TransitMode.RIDESHARE,
+            distance_km=15.0,
+            duration_min=22.0,
+            segments=[{
+                "mode": "rideshare",
+                "distance_km": 15.0,
+                "duration_min": 22.0,
+                "description": "rideshare for 15.0 km",
+            }],
+        ),
+    ]
+
+
+def _mock_short_routes():
+    """Return short-distance routes (campus hops) where walking/biking wins."""
+    return [
+        RawRouteResult(
+            mode=TransitMode.DRIVING,
+            distance_km=0.8,
+            duration_min=5.0,
+            segments=[{
+                "mode": "driving",
+                "distance_km": 0.8,
+                "duration_min": 5.0,
+                "description": "driving for 0.8 km",
+            }],
+        ),
+        RawRouteResult(
+            mode=TransitMode.WALKING,
+            distance_km=0.7,
+            duration_min=8.0,
+            segments=[{
+                "mode": "walking",
+                "distance_km": 0.7,
+                "duration_min": 8.0,
+                "description": "walking for 0.7 km",
+            }],
+        ),
+        RawRouteResult(
+            mode=TransitMode.BICYCLING,
+            distance_km=0.8,
+            duration_min=3.0,
+            segments=[{
+                "mode": "bicycling",
+                "distance_km": 0.8,
+                "duration_min": 3.0,
+                "description": "bicycling for 0.8 km",
+            }],
+        ),
+    ]
+
+
+def _distance_aware_side_effect(*args, **kwargs):
+    """Return short or long routes based on origin/destination coordinates."""
+    origin = kwargs.get("origin", args[0] if args else "")
+    destination = kwargs.get("destination", args[1] if len(args) > 1 else "")
+
+    # If both are lat,lng and close together, return short routes
+    try:
+        olat, olng = map(float, origin.split(","))
+        dlat, dlng = map(float, destination.split(","))
+        dist = abs(olat - dlat) + abs(olng - dlng)
+        if dist < 0.02:  # very close locations
+            return _mock_short_routes()
+    except (ValueError, AttributeError):
+        pass
+
+    return _mock_raw_routes()
+
+
+@pytest.fixture
+def mock_routes():
+    """Patch get_routes to return distance-aware mock data."""
+    with patch("agents.orchestrator.get_routes", new_callable=AsyncMock) as mock:
+        mock.side_effect = _distance_aware_side_effect
+        yield mock
 
 
 # ---------------------------------------------------------------------------
@@ -122,34 +261,30 @@ class TestBuildTransitWindows:
 
 class TestPlanDay:
     @pytest.mark.asyncio
-    async def test_returns_day_plan_response(self):
+    async def test_returns_day_plan_response(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         assert isinstance(result, DayPlanResponse)
 
     @pytest.mark.asyncio
-    async def test_has_events(self):
+    async def test_has_events(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         assert len(result.events) >= 4
 
     @pytest.mark.asyncio
-    async def test_has_transit_windows(self):
+    async def test_has_transit_windows(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         assert len(result.transit_windows) > 0
 
     @pytest.mark.asyncio
-    async def test_transit_windows_have_recommendations(self):
+    async def test_transit_windows_have_recommendations(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         for tw in result.transit_windows:
             assert isinstance(tw.recommended, TransitRecommendation)
@@ -159,10 +294,9 @@ class TestPlanDay:
             assert len(tw.recommended.summary) > 0
 
     @pytest.mark.asyncio
-    async def test_transit_windows_have_route_comparison(self):
+    async def test_transit_windows_have_route_comparison(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         for tw in result.transit_windows:
             assert tw.route is not None
@@ -170,20 +304,18 @@ class TestPlanDay:
             assert tw.route.reasoning is not None
 
     @pytest.mark.asyncio
-    async def test_day_totals_are_positive(self):
+    async def test_day_totals_are_positive(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         assert result.total_emissions_g >= 0
         assert result.total_cost_usd >= 0
         assert result.total_transit_min > 0
 
     @pytest.mark.asyncio
-    async def test_day_totals_match_window_sums(self):
+    async def test_day_totals_match_window_sums(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         sum_emissions = sum(tw.recommended.emissions_g for tw in result.transit_windows)
         sum_cost = sum(tw.recommended.cost_usd for tw in result.transit_windows)
@@ -193,11 +325,10 @@ class TestPlanDay:
         assert abs(result.total_transit_min - sum_time) < 1.0
 
     @pytest.mark.asyncio
-    async def test_with_home_address(self):
+    async def test_with_home_address(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
             home_address="33.4145,-111.9265",
-            routing_mode="mock",
         )
         from_events = [tw.from_event for tw in result.transit_windows]
         to_events = [tw.to_event for tw in result.transit_windows]
@@ -205,10 +336,9 @@ class TestPlanDay:
         assert "Home" in to_events
 
     @pytest.mark.asyncio
-    async def test_without_home_address(self):
+    async def test_without_home_address(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         from_events = [tw.from_event for tw in result.transit_windows]
         to_events = [tw.to_event for tw in result.transit_windows]
@@ -216,31 +346,28 @@ class TestPlanDay:
         assert "Home" not in to_events
 
     @pytest.mark.asyncio
-    async def test_date_in_response(self):
+    async def test_date_in_response(self, mock_routes):
         result = await plan_day(
             target_date=date(2026, 4, 24),
-            routing_mode="mock",
         )
         assert result.date == "2026-04-24"
 
     @pytest.mark.asyncio
-    async def test_varied_recommendations(self):
+    async def test_varied_recommendations(self, mock_routes):
         """Short campus hops should not all be the same mode as long trips."""
         result = await plan_day(
             target_date=date(2026, 4, 24),
             home_address="33.4145,-111.9265",
-            routing_mode="mock",
         )
         modes = {tw.recommended.mode for tw in result.transit_windows}
         assert len(modes) > 1, "All transit windows recommend the same mode — should vary by distance"
 
     @pytest.mark.asyncio
-    async def test_short_trips_prefer_active_transit(self):
+    async def test_short_trips_prefer_active_transit(self, mock_routes):
         """On-campus trips (< 1km) should recommend walking or bicycling."""
         result = await plan_day(
             target_date=date(2026, 4, 24),
             home_address="33.4145,-111.9265",
-            routing_mode="mock",
         )
         active_modes = {"walking", "bicycling"}
         # At least one short trip should be active transit
@@ -260,7 +387,6 @@ class TestPlanDayEndpoint:
     @pytest.fixture
     def app(self):
         import os
-        os.environ["ROUTING_MODE"] = "mock"
         os.environ["GROQ_API_KEY"] = ""
         from core.config import get_settings
         get_settings.cache_clear()
@@ -278,9 +404,11 @@ class TestPlanDayEndpoint:
 
     @pytest.mark.asyncio
     async def test_plan_day_endpoint(self, client):
-        resp = await client.post("/api/v1/plan-day", json={
-            "date": "2026-04-24",
-        })
+        with patch("agents.orchestrator.get_routes", new_callable=AsyncMock) as mock:
+            mock.return_value = _mock_raw_routes()
+            resp = await client.post("/api/v1/plan-day", json={
+                "date": "2026-04-24",
+            })
         assert resp.status_code == 200
         data = resp.json()
         assert data["date"] == "2026-04-24"
@@ -289,10 +417,12 @@ class TestPlanDayEndpoint:
 
     @pytest.mark.asyncio
     async def test_plan_day_with_home(self, client):
-        resp = await client.post("/api/v1/plan-day", json={
-            "date": "2026-04-24",
-            "home_address": "33.4145,-111.9265",
-        })
+        with patch("agents.orchestrator.get_routes", new_callable=AsyncMock) as mock:
+            mock.return_value = _mock_raw_routes()
+            resp = await client.post("/api/v1/plan-day", json={
+                "date": "2026-04-24",
+                "home_address": "33.4145,-111.9265",
+            })
         assert resp.status_code == 200
         data = resp.json()
         froms = [tw["from_event"] for tw in data["transit_windows"]]
@@ -300,9 +430,11 @@ class TestPlanDayEndpoint:
 
     @pytest.mark.asyncio
     async def test_plan_day_has_totals(self, client):
-        resp = await client.post("/api/v1/plan-day", json={
-            "date": "2026-04-24",
-        })
+        with patch("agents.orchestrator.get_routes", new_callable=AsyncMock) as mock:
+            mock.return_value = _mock_raw_routes()
+            resp = await client.post("/api/v1/plan-day", json={
+                "date": "2026-04-24",
+            })
         data = resp.json()
         assert "total_emissions_g" in data
         assert "total_cost_usd" in data
@@ -310,9 +442,11 @@ class TestPlanDayEndpoint:
 
     @pytest.mark.asyncio
     async def test_plan_day_windows_have_recommended(self, client):
-        resp = await client.post("/api/v1/plan-day", json={
-            "date": "2026-04-24",
-        })
+        with patch("agents.orchestrator.get_routes", new_callable=AsyncMock) as mock:
+            mock.return_value = _mock_raw_routes()
+            resp = await client.post("/api/v1/plan-day", json={
+                "date": "2026-04-24",
+            })
         data = resp.json()
         for tw in data["transit_windows"]:
             assert "recommended" in tw

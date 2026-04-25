@@ -1,13 +1,9 @@
 """
-Google Maps Routes API client with a built-in mock fallback.
+Google Maps Routes API client.
 
-When ROUTING_MODE=mock, returns synthetic but realistic route data
-so the full pipeline works without an API key.
+All route fetching uses the live Google Maps Routes API.
 """
 
-import hashlib
-import math
-import random
 from dataclasses import dataclass
 
 import httpx
@@ -17,7 +13,7 @@ from core.emission_factors import TransitMode
 
 @dataclass
 class RawRouteResult:
-    """Raw result from the routing provider (or mock)."""
+    """Raw result from the routing provider."""
     mode: TransitMode
     distance_km: float
     duration_min: float
@@ -25,69 +21,8 @@ class RawRouteResult:
 
 
 # ---------------------------------------------------------------------------
-# Mock routing engine
+# Segment building
 # ---------------------------------------------------------------------------
-
-def _deterministic_seed(origin: str, destination: str) -> int:
-    """Generate a stable seed from origin+destination so mock results are repeatable."""
-    h = hashlib.md5(f"{origin}|{destination}".encode()).hexdigest()
-    return int(h[:8], 16)
-
-
-def _haversine_estimate(origin: str, destination: str) -> float:
-    """
-    Rough distance estimate in km.
-    If inputs look like 'lat,lng' pairs, compute haversine.
-    Otherwise, use a hash-based synthetic distance (5-40 km range).
-    """
-    try:
-        lat1, lng1 = map(float, origin.split(","))
-        lat2, lng2 = map(float, destination.split(","))
-        R = 6371.0
-        dlat = math.radians(lat2 - lat1)
-        dlng = math.radians(lng2 - lng1)
-        a = (
-            math.sin(dlat / 2) ** 2
-            + math.cos(math.radians(lat1))
-            * math.cos(math.radians(lat2))
-            * math.sin(dlng / 2) ** 2
-        )
-        return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    except (ValueError, AttributeError):
-        rng = random.Random(_deterministic_seed(origin, destination))
-        return round(rng.uniform(5.0, 40.0), 1)
-
-
-# Speed assumptions for mock (km/h)
-_MOCK_SPEEDS: dict[TransitMode, float] = {
-    TransitMode.DRIVING: 45.0,
-    TransitMode.CARPOOL_2: 45.0,
-    TransitMode.CARPOOL_4: 45.0,
-    TransitMode.BUS: 20.0,
-    TransitMode.LIGHT_RAIL: 35.0,
-    TransitMode.SUBWAY: 40.0,
-    TransitMode.COMMUTER_RAIL: 50.0,
-    TransitMode.WALKING: 5.0,
-    TransitMode.BICYCLING: 15.0,
-    TransitMode.E_SCOOTER: 12.0,
-    TransitMode.RIDESHARE: 40.0,
-}
-
-# Distance multiplier vs straight-line (road detour factor)
-_DETOUR: dict[TransitMode, float] = {
-    TransitMode.DRIVING: 1.3,
-    TransitMode.CARPOOL_2: 1.3,
-    TransitMode.CARPOOL_4: 1.35,
-    TransitMode.BUS: 1.5,
-    TransitMode.LIGHT_RAIL: 1.2,
-    TransitMode.SUBWAY: 1.15,
-    TransitMode.COMMUTER_RAIL: 1.25,
-    TransitMode.WALKING: 1.35,
-    TransitMode.BICYCLING: 1.25,
-    TransitMode.E_SCOOTER: 1.25,
-    TransitMode.RIDESHARE: 1.35,
-}
-
 
 def _build_transit_segments(
     mode: TransitMode, total_km: float, total_min: float
@@ -153,26 +88,6 @@ def _build_transit_segments(
             "description": "Walk to destination",
         },
     ]
-
-
-def mock_route(
-    origin: str, destination: str, mode: TransitMode
-) -> RawRouteResult:
-    """Generate a synthetic but deterministic route."""
-    straight_km = _haversine_estimate(origin, destination)
-    detour = _DETOUR.get(mode, 1.3)
-    distance_km = round(straight_km * detour, 2)
-    speed = _MOCK_SPEEDS.get(mode, 30.0)
-    duration_min = round((distance_km / speed) * 60, 1)
-
-    segments = _build_transit_segments(mode, distance_km, duration_min)
-
-    return RawRouteResult(
-        mode=mode,
-        distance_km=distance_km,
-        duration_min=duration_min,
-        segments=segments,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -259,29 +174,21 @@ async def fetch_route(
     origin: str,
     destination: str,
     mode: TransitMode,
-    routing_mode: str = "mock",
     api_key: str = "",
 ) -> RawRouteResult:
-    """Fetch a route via the configured provider. Falls back to mock on API errors."""
-    if routing_mode == "live":
-        try:
-            return await live_route(origin, destination, mode, api_key)
-        except Exception as e:
-            print(f"[WARN] Live route failed for {mode.value}: {e}. Falling back to mock.")
-            return mock_route(origin, destination, mode)
-    return mock_route(origin, destination, mode)
+    """Fetch a route via the Google Maps Routes API. Raises on failure."""
+    return await live_route(origin, destination, mode, api_key)
 
 
 async def fetch_all_routes(
     origin: str,
     destination: str,
     modes: list[TransitMode],
-    routing_mode: str = "mock",
     api_key: str = "",
 ) -> list[RawRouteResult]:
     """Fetch routes for all requested modes."""
     results = []
     for mode in modes:
-        result = await fetch_route(origin, destination, mode, routing_mode, api_key)
+        result = await fetch_route(origin, destination, mode, api_key)
         results.append(result)
     return results

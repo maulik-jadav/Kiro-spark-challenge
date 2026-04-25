@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Validate Emission Factor Sources",
+  "description": "When emission_factors.py is saved, check that every EmissionFactor and CostFactor entry has a non-empty source field to ensure data credibility.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "backend/core/emission_factors.py"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The emission_factors.py file was just saved. Read the file and check every EmissionFactor and CostFactor entry in EMISSION_FACTORS and COST_FACTORS dictionaries. Verify that each entry has a non-empty `source` field (not empty string, not whitespace-only). If any entry has an empty or missing source, report which entries are missing sources and suggest appropriate source citations. Do not modify the file unless asked — just report the findings."
+  }
+}
